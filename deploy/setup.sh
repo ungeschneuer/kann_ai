@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 USER="$(whoami)"
-SUPERVISORD_CONF_DIR="$HOME/.config/supervisord/conf.d"
+SUPERVISORD_CONF_DIR="$HOME/etc/services.d"
 LOG_DIR="$HOME/logs"
 
 echo "=== kann_ai_bot setup for user: $USER ==="

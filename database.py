@@ -6,6 +6,10 @@ import sqlite3
 import aiosqlite
 import os
 from datetime import datetime, timezone
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
 DB_PATH = os.getenv("DB_PATH", "kann_ai.db")
 
