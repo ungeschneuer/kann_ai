@@ -25,11 +25,20 @@ def _post_url(toot_id: str) -> str:
 
 
 def post_question(question: str, article_id: int) -> str:
-    """Post a question to Mastodon and return the public post URL."""
+    """Post a question to Mastodon, then reply with the vote link. Returns the public URL of the question post."""
     website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
     link = f"{website_url}/frage/{article_id}"
-    status = f"{question}\n\n{vote_cta()} {link}"
-    toot = _client().toot(status)
+    client = _client()
+
+    # First post: the question
+    toot = client.toot(question)
     url = _post_url(str(toot["id"]))
     logger.info("Posted to Mastodon: %s", url)
+
+    # Reply: vote CTA with link
+    client.status_post(
+        f"{vote_cta()} {link}",
+        in_reply_to_id=toot["id"],
+    )
+
     return url
