@@ -23,6 +23,7 @@ HEADERS = {
 SITEMAP_URL     = os.getenv("WIKIHOW_SITEMAP_URL", "https://de.wikihow.com/sitemap.xml")
 WIKIHOW_DOMAIN  = os.getenv("WIKIHOW_DOMAIN", "de.wikihow.com")
 QUESTION_PREFIX = os.getenv("QUESTION_PREFIX", "Kann KI")
+LOCALE          = os.getenv("LOCALE", "de")
 
 # Words that should stay lowercase when they appear at the start of a question
 LOWERCASE_STARTERS_DE = {
@@ -39,9 +40,7 @@ LOWERCASE_STARTERS_EN = {
     "someone", "something", "yourself", "themselves", "others",
 }
 
-LOWERCASE_STARTERS = (
-    LOWERCASE_STARTERS_EN if WIKIHOW_DOMAIN.startswith("en.") else LOWERCASE_STARTERS_DE
-)
+LOWERCASE_STARTERS = LOWERCASE_STARTERS_EN if LOCALE == "en" else LOWERCASE_STARTERS_DE
 
 
 def _slug_to_title(slug: str) -> str:
@@ -54,7 +53,7 @@ def _slug_to_title(slug: str) -> str:
 
 def clean_title(title: str) -> str:
     """Strip WikiHow-style prefixes like 'How to' or 'Wie man'."""
-    if WIKIHOW_DOMAIN.startswith("en."):
+    if LOCALE == "en":
         title = re.sub(r"^How\s+to\s+", "", title, flags=re.IGNORECASE)
         title = re.sub(r"^How\s+do\s+you\s+", "", title, flags=re.IGNORECASE)
         title = re.sub(r"^How\s+can\s+I\s+", "", title, flags=re.IGNORECASE)
