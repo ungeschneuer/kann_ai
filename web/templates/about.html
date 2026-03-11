@@ -16,7 +16,7 @@
       <p class="static-heading">{{ loc.about_mastodon_title | safe }}</p>
       <p class="static-p">
         {{ loc.about_mastodon_body }}
-        <a href="{{ mastodon_url }}">{{ mastodon_handle }}</a>.
+        <a href="{{ mastodon_url }}" target="_blank" rel="noopener">{{ mastodon_handle }}</a>.
       </p>
       {% endif %}
 
@@ -24,7 +24,7 @@
       <p class="static-heading">{{ loc.about_bluesky_title | safe }}</p>
       <p class="static-p">
         {{ loc.about_bluesky_body }}
-        <a href="{{ bluesky_url }}">{{ bluesky_handle }}</a>.
+        <a href="{{ bluesky_url }}" target="_blank" rel="noopener">{{ bluesky_handle }}</a>.
       </p>
       {% endif %}
 

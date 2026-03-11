@@ -1,6 +1,11 @@
 """
 WikiHow scraper. Reads configuration from environment variables.
 Uses the sitemap as the article source; sub-sitemaps are fetched in parallel.
+
+Articles are filtered by:
+- Blocklist (blocklist.py): politically incorrect or offensive terms
+- Non-action title filter: listicles, definitions, and other non-how-to patterns
+  that would produce grammatically broken questions
 """
 import os
 import re

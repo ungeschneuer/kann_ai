@@ -16,11 +16,21 @@ A bot runs in the background on a randomised interval (default 30–120 min). Ea
 
 1. Fetches the WikiHow sitemap and stores any new articles
 2. Picks one unposted article at random
-3. Posts the question to Mastodon and/or Bluesky with a link to the website
+3. Posts the question to Mastodon and/or Bluesky — the question as the main post, the vote link as a reply
 4. Marks the article as posted so it is never repeated
 
 The web app is independent — it shows all scraped articles regardless of posting status.
 Visitors vote yes or no; results appear once a question reaches 3 votes.
+
+### Content filtering
+
+The scraper filters out articles that do not produce well-formed questions:
+
+- **Blocklist** (`blocklist.py`): politically incorrect or offensive terms in both DE and EN
+- **Non-action titles**: listicles ("10 Signs..."), definitions ("What is..."), and other
+  non-how-to article types that generate grammatically broken questions
+
+Run `cleanup_blocklist.py` after updating the blocklist to remove existing database entries.
 
 ## Stack
 
@@ -56,35 +66,34 @@ cp .env.example .env
 
 | Variable | Description |
 |---|---|
-| `LOCALE` | `de` or `en` |
+| `LOCALE` | `de` or `en` — controls language, question format, and scraper behaviour |
 | `MASTODON_INSTANCE_URL` | Your Mastodon instance URL |
 | `MASTODON_ACCESS_TOKEN` | Mastodon app token |
 | `MASTODON_HANDLE` | e.g. `@bot@mastodon.social` |
-| `BLUESKY_HANDLE` | e.g. `bot.bsky.social` |
+| `BLUESKY_HANDLE` | e.g. `bot.bsky.social` (no `@`) |
 | `BLUESKY_APP_PASSWORD` | Bluesky app password |
 | `WEBSITE_URL` | Public URL of the web app |
 | `SITE_NAME` | Displayed site name |
+| `OTHER_LOCALE_URL` | URL of the other language instance, shown in the nav |
 | `DB_PATH` | Path to the SQLite database (absolute path recommended in production) |
 | `BOT_MIN_INTERVAL` | Minimum posting interval in minutes (default: 30) |
 | `BOT_MAX_INTERVAL` | Maximum posting interval in minutes (default: 120) |
 | `WIKIHOW_SITEMAP_URL` | WikiHow sitemap to scrape |
-| `WIKIHOW_DOMAIN` | WikiHow domain, e.g. `de.wikihow.com` |
+| `WIKIHOW_DOMAIN` | Domain used in sitemap URLs — `de.wikihow.com` for DE, `www.wikihow.com` for EN |
 | `QUESTION_PREFIX` | Question prefix, e.g. `Kann KI` or `Can AI` |
 
 Mastodon and Bluesky are both optional. The bot skips a platform if its credentials
 are missing.
 
+Note: for the English instance, the WikiHow sitemap lists articles under `www.wikihow.com`
+(not `en.wikihow.com`), so `WIKIHOW_DOMAIN` must be set to `www.wikihow.com`. See
+`.env.en.example` for the correct defaults.
+
 ### Run locally
 
 ```bash
-# Initialise the database
-uv run python -c "from database import init_db; init_db()"
-
-# Load articles from WikiHow (takes a few seconds)
-uv run python -c "from scraper import scrape_all; from database import store_articles; store_articles(scrape_all())"
-
-# Mark some articles as posted for testing, so the site has content to show
-uv run python seed_fake_data.py 30
+# Initialise the database and load articles from WikiHow
+uv run python -c "from database import init_db, store_articles; from scraper import scrape_all; init_db(); store_articles(scrape_all())"
 
 # Start the web app
 uv run uvicorn web.app:app --reload
@@ -107,6 +116,25 @@ DOTENV_PATH=.env.en uv run uvicorn web.app:app --port 8001 --reload
 
 See `.env.example` and `.env.en.example` for full templates.
 
+### Content moderation
+
+To remove existing articles that match the blocklist or non-action filter:
+
+```bash
+DOTENV_PATH=.env.de uv run python cleanup_blocklist.py
+DOTENV_PATH=.env.en uv run python cleanup_blocklist.py
+```
+
+## Social media posting
+
+Each bot cycle posts in two steps:
+
+1. The question is posted as a standalone post with the correct language tag (`de` or `en`)
+2. The vote link is posted as a direct reply to the question, with a clickable facet (Bluesky) or plain link (Mastodon)
+
+Mastodon posts are sent with `visibility="public"` to ensure they appear on public timelines.
+Make sure the Mastodon account's default post visibility is also set to Public in account preferences.
+
 ## Deployment
 
 The `supervisord/` directory contains process configs for all four processes
@@ -120,26 +148,30 @@ make logs-web-de     # tail the German web log
 make logs-bot-en     # tail the English bot log
 ```
 
+For first-time server setup see `DEPLOY_UBERSPACE.md`.
+
 ## Project structure
 
 ```
-bot.py               # Bot process: scrape articles, post questions
-scraper.py           # WikiHow sitemap scraper
-database.py          # Database layer (sync for bot, async for web)
-mastodon_client.py   # Mastodon posting
-bluesky_client.py    # Bluesky posting
-utils.py             # Shared helpers
+bot.py                # Bot process: scrape articles, post questions
+scraper.py            # WikiHow sitemap scraper with action-title filtering
+database.py           # Database layer (sync for bot, async for web)
+blocklist.py          # Politically incorrect term filter (DE + EN)
+cleanup_blocklist.py  # One-off script: remove filtered articles from DB
+mastodon_client.py    # Mastodon posting (question + reply with link)
+bluesky_client.py     # Bluesky posting (question + reply with clickable link)
+utils.py              # Shared helpers (localised vote CTA)
 web/
-  app.py             # FastAPI application
-  og_image.py        # Open Graph image generator (retro DOS style)
-  locales/           # Translation strings (de.py, en.py)
-  templates/         # Jinja2 templates
-  static/            # CSS, JS, fonts, vendor assets
-supervisord/         # Process configs for production
-deploy/              # Server setup and update scripts
-seed_fake_data.py    # Marks random articles as posted for local testing
-.env.example         # German instance config template
-.env.en.example      # English instance config template
+  app.py              # FastAPI application
+  og_image.py         # Open Graph image generator (retro DOS style)
+  locales/            # Translation strings (de.py, en.py)
+  templates/          # Jinja2 templates
+  static/             # CSS, JS, fonts, vendor assets
+supervisord/          # Process configs for production
+deploy/               # Server setup and update scripts
+seed_fake_data.py     # Marks random articles as posted for local testing
+.env.example          # German instance config template
+.env.en.example       # English instance config template
 ```
 
 ## License

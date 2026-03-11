@@ -32,6 +32,13 @@ CREATE TABLE IF NOT EXISTS votes (
     UNIQUE(article_id, session_id)
 );
 
+CREATE TABLE IF NOT EXISTS vote_counts (
+    article_id  INTEGER PRIMARY KEY REFERENCES articles(id),
+    ja          INTEGER NOT NULL DEFAULT 0,
+    nein        INTEGER NOT NULL DEFAULT 0,
+    total       INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS mastodon_posts (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     article_id  INTEGER NOT NULL UNIQUE REFERENCES articles(id),
@@ -58,6 +65,17 @@ def init_db():
         conn.execute("""
             INSERT OR IGNORE INTO social_posts (article_id, posted_at)
             SELECT article_id, posted_at FROM mastodon_posts
+        """)
+        # One-time migration: populate vote_counts from existing votes
+        conn.execute("""
+            INSERT OR IGNORE INTO vote_counts (article_id, ja, nein, total)
+            SELECT
+                article_id,
+                SUM(CASE WHEN vote = 'ja'   THEN 1 ELSE 0 END),
+                SUM(CASE WHEN vote = 'nein' THEN 1 ELSE 0 END),
+                COUNT(*)
+            FROM votes
+            GROUP BY article_id
         """)
         conn.commit()
 
@@ -146,23 +164,31 @@ async def async_get_random_article() -> dict | None:
 async def async_get_vote_counts(article_id: int) -> dict:
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute(
-            "SELECT vote, COUNT(*) FROM votes WHERE article_id = ? GROUP BY vote",
+            "SELECT ja, nein FROM vote_counts WHERE article_id = ?",
             (article_id,),
         ) as cur:
-            rows = await cur.fetchall()
-    counts = {"ja": 0, "nein": 0}
-    for vote, count in rows:
-        counts[vote] = count
-    return counts
+            row = await cur.fetchone()
+    return {"ja": row[0], "nein": row[1]} if row else {"ja": 0, "nein": 0}
 
 
 async def async_add_vote(article_id: int, vote: str, session_id: str) -> bool:
-    """Store a vote. Returns False if this session has already voted."""
+    """Store a vote and update the cached counts. Returns False if this session has already voted."""
     try:
         async with aiosqlite.connect(DB_PATH) as db:
             await db.execute(
                 "INSERT INTO votes (article_id, vote, voted_at, session_id) VALUES (?, ?, ?, ?)",
                 (article_id, vote, datetime.now(timezone.utc).isoformat(), session_id),
+            )
+            ja_delta   = 1 if vote == "ja"   else 0
+            nein_delta = 1 if vote == "nein" else 0
+            await db.execute(
+                """INSERT INTO vote_counts (article_id, ja, nein, total)
+                   VALUES (?, ?, ?, 1)
+                   ON CONFLICT(article_id) DO UPDATE SET
+                     ja    = ja    + excluded.ja,
+                     nein  = nein  + excluded.nein,
+                     total = total + 1""",
+                (article_id, ja_delta, nein_delta),
             )
             await db.commit()
         return True
@@ -235,41 +261,30 @@ async def async_get_all_questions(
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[list[dict], int]:
-    """Return paginated questions with at least min_votes votes."""
+    """Return paginated questions with at least min_votes votes, using cached vote counts."""
     if sort not in SORT_OPTIONS:
         sort = "neu"
     col, direction = SORT_OPTIONS[sort]
     offset = (page - 1) * per_page
 
     query = f"""
-        SELECT id, question, total, ja, nein,
-               CASE WHEN total > 0 THEN ROUND(CAST(ja   AS REAL) / total * 100) ELSE 0 END AS ja_percent,
-               CASE WHEN total > 0 THEN ROUND(CAST(nein AS REAL) / total * 100) ELSE 0 END AS nein_percent
-        FROM (
-            SELECT
-                a.id,
-                a.question,
-                a.scraped_at,
-                COUNT(v.id)                                        AS total,
-                SUM(CASE WHEN v.vote = 'ja'   THEN 1 ELSE 0 END)  AS ja,
-                SUM(CASE WHEN v.vote = 'nein' THEN 1 ELSE 0 END)  AS nein
-            FROM articles a
-            LEFT JOIN votes v ON a.id = v.article_id
-            GROUP BY a.id
-            HAVING total >= ?
-        )
+        SELECT
+            a.id,
+            a.question,
+            vc.total,
+            vc.ja,
+            vc.nein,
+            ROUND(CAST(vc.ja   AS REAL) / vc.total * 100) AS ja_percent,
+            ROUND(CAST(vc.nein AS REAL) / vc.total * 100) AS nein_percent,
+            a.scraped_at
+        FROM vote_counts vc
+        JOIN articles a ON a.id = vc.article_id
+        WHERE vc.total >= ?
         ORDER BY {col} {direction}
         LIMIT ? OFFSET ?
     """
-    count_query = """
-        SELECT COUNT(*) FROM (
-            SELECT a.id, COUNT(v.id) AS total
-            FROM articles a
-            LEFT JOIN votes v ON a.id = v.article_id
-            GROUP BY a.id
-            HAVING total >= ?
-        )
-    """
+    count_query = "SELECT COUNT(*) FROM vote_counts WHERE total >= ?"
+
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(count_query, (min_votes,)) as cur:
@@ -280,10 +295,10 @@ async def async_get_all_questions(
     result = []
     for row in rows:
         d = dict(row)
-        d["total"]       = int(d["total"])
-        d["ja"]          = int(d["ja"] or 0)
-        d["nein"]        = int(d["nein"] or 0)
-        d["ja_percent"]  = int(d["ja_percent"] or 0)
+        d["total"]        = int(d["total"])
+        d["ja"]           = int(d["ja"] or 0)
+        d["nein"]         = int(d["nein"] or 0)
+        d["ja_percent"]   = int(d["ja_percent"] or 0)
         d["nein_percent"] = int(d["nein_percent"] or 0)
         result.append(d)
     return result, total_count
