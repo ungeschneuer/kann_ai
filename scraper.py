@@ -116,8 +116,9 @@ async def _async_fetch_all_urls() -> list[str]:
         root = await _fetch_text(client, SITEMAP_URL)
         if not root:
             return []
+        logger.debug("Sitemap root preview: %s", root[:500])
 
-        sub_urls = re.findall(r"<loc>(https://[^<]+\.xml[^<]*)</loc>", root)
+        sub_urls = re.findall(r"<loc>([^<]+\.xml[^<]*)</loc>", root)
         if sub_urls:
             logger.info("Sitemap index: %d sub-sitemaps found", len(sub_urls))
             texts = []
@@ -128,8 +129,8 @@ async def _async_fetch_all_urls() -> list[str]:
         else:
             combined = root
 
-    domain_escaped = re.escape(WIKIHOW_DOMAIN)
-    locs = re.findall(rf"<loc>(https://{domain_escaped}/[^<]+)</loc>", combined)
+    locs = re.findall(r"<loc>([^<]+)</loc>", combined)
+    locs = [u for u in locs if WIKIHOW_DOMAIN in u and not u.endswith(".xml")]
     logger.info("Sitemap: %d URLs found", len(locs))
     return locs
 
