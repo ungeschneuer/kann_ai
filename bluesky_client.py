@@ -4,6 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from atproto import Client, models
 from utils import vote_cta
+from web.og_image import generate_og_image
 
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
@@ -50,27 +51,22 @@ def _make_link_facet(text: str, link: str) -> list:
 
 
 def post_question(question: str, article_id: int) -> str:
-    """Post a question to Bluesky, then reply with the vote link. Returns the public URL of the question post."""
+    """Post a question to Bluesky with the OG image and a link. Returns the public URL."""
     website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
+    site_name = os.getenv("SITE_NAME", "Kann KI?")
     link = f"{website_url}/frage/{article_id}"
+    post_text = f"{vote_cta()}\n\n{link}"
+
+    png = generate_og_image(question, site_name, {}, website_url)
+
     client = _get_client()
-
-    # First post: the question
-    first = client.send_post(text=question, langs=[LOCALE])
-    url = _post_url(first.uri)
-    logger.info("Posted to Bluesky: %s", url)
-
-    # Reply: vote CTA with clickable link
-    reply_text = f"{vote_cta()} {link}"
-    reply_ref = models.AppBskyFeedPost.ReplyRef(
-        root=models.create_strong_ref(first),
-        parent=models.create_strong_ref(first),
-    )
-    client.send_post(
-        text=reply_text,
-        reply_to=reply_ref,
-        facets=_make_link_facet(reply_text, link),
+    post = client.send_image(
+        text=post_text,
+        image=png,
+        image_alt=question,
+        facets=_make_link_facet(post_text, link),
         langs=[LOCALE],
     )
-
+    url = _post_url(post.uri)
+    logger.info("Posted to Bluesky: %s", url)
     return url

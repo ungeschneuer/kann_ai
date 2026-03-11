@@ -45,8 +45,10 @@ def post_question(question: str, article_id: int) -> dict:
         multiple=False,
         hide_totals=False,
     )
+    website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
+    link = f"{website_url}/frage/{article_id}"
     toot = client.status_post(
-        question,
+        f"{question}\n\n{link}",
         poll=poll,
         language=LOCALE,
         visibility="public",
