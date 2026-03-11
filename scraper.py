@@ -66,6 +66,33 @@ def clean_title(title: str) -> str:
     return title.strip()
 
 
+# Non-action prefixes that produce grammatically broken questions.
+# These articles are typically listicles, definitions, or concept pages.
+_BAD_PREFIXES_EN = re.compile(
+    r"^\d|"  # starts with a number (e.g. "10 Signs...")
+    r"^(What|Why|When|Where|Who|Which|Whether|"
+    r"Signs|Symptoms|Reasons|Ways|Tips|Tricks|Facts|Types|"
+    r"Understanding|Everything|Things|Examples|Differences|"
+    r"Benefits|Effects|Causes|History|Overview|Introduction)\b",
+    re.IGNORECASE,
+)
+
+_BAD_PREFIXES_DE = re.compile(
+    r"^\d|"  # starts with a number
+    r"^(Was|Warum|Wann|Wo|Wer|Welche|Welcher|Welches|"
+    r"Zeichen|Symptome|Gründe|Wege|Tipps|Tricks|Fakten|Arten|Typen|"
+    r"Unterschiede|Vorteile|Nachteile|Ursachen|Geschichte|Übersicht|"
+    r"Alles|Dinge|Beispiele|Einführung)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_action_title(cleaned_title: str) -> bool:
+    """Return True if the cleaned title looks like an actionable how-to."""
+    pattern = _BAD_PREFIXES_EN if LOCALE == "en" else _BAD_PREFIXES_DE
+    return not pattern.match(cleaned_title)
+
+
 def make_question(title: str) -> str:
     """Turn an article title into a question, e.g. 'Kann KI Sushi zubereiten?'"""
     title = clean_title(title)
@@ -88,6 +115,9 @@ def _urls_to_articles(urls: list[str]) -> list[dict]:
             continue
         title = _slug_to_title(slug)
         if len(title) < 5:
+            continue
+        cleaned = clean_title(title)
+        if not _is_action_title(cleaned):
             continue
         question = make_question(title)
         if is_blocked(title, LOCALE) or is_blocked(question, LOCALE):
