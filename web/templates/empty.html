@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="win-center">
+  <div class="tui-window question-win">
+    <fieldset class="tui-fieldset">
+      <legend> {{ site_name }} </legend>
+      <p class="question-text muted-text">
+        {{ loc.empty_title }}<br>
+        {{ loc.empty_loading }}
+      </p>
+    </fieldset>
+  </div>
+</div>
+{% endblock %}

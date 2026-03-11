@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ loc.about_title }} – {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="win-center">
+  <div class="tui-window page-win">
+    <fieldset class="tui-fieldset">
+      <legend> {{ loc.about_title }} </legend>
+
+      <p class="static-p">{{ loc.about_intro | safe }}</p>
+
+      <p class="static-heading">{{ loc.about_how_title | safe }}</p>
+      <p class="static-p">{{ loc.about_how_body | safe }}</p>
+
+      {% if mastodon_url %}
+      <p class="static-heading">{{ loc.about_mastodon_title | safe }}</p>
+      <p class="static-p">
+        {{ loc.about_mastodon_body }}
+        <a href="{{ mastodon_url }}">{{ mastodon_handle }}</a>.
+      </p>
+      {% endif %}
+
+      {% if bluesky_url %}
+      <p class="static-heading">{{ loc.about_bluesky_title | safe }}</p>
+      <p class="static-p">
+        {{ loc.about_bluesky_body }}
+        <a href="{{ bluesky_url }}">{{ bluesky_handle }}</a>.
+      </p>
+      {% endif %}
+
+      <p class="static-heading">{{ loc.about_tech_title | safe }}</p>
+      <p class="static-p">
+        Python &bull; FastAPI &bull; SQLite &bull; <a href="https://github.com/vinibiavatti1/TuiCss">TuiCss</a><br>
+        {{ loc.about_tech_scraping }} <a href="{{ loc.about_wikihow_url }}">{{ loc.about_wikihow_label }}</a>.<br>
+        {{ loc.about_tech_hosting | safe }}
+      </p>
+
+    </fieldset>
+  </div>
+</div>
+{% endblock %}

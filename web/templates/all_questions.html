@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ loc.page_alle_title }} – {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="win-center">
+  <div class="tui-window page-win">
+    <fieldset class="tui-fieldset">
+      <legend> {{ loc.page_alle_title }} </legend>
+
+      <p class="static-p" style="margin-bottom: 0.75rem;">{{ loc.min_votes_info }}</p>
+
+      <form class="sort-form" method="get" action="/alle" aria-label="{{ loc.sort_label }}">
+        <label for="sort-select" class="sort-label">{{ loc.sort_label }}</label>
+        <span class="sort-select-wrap">
+          <select id="sort-select" name="sort" class="sort-select"
+                  onchange="this.form.submit()">
+            {% for key, label in sort_labels.items() %}
+            <option value="{{ key }}"{% if key == sort %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </span>
+        <noscript><button type="submit" class="tui-button sort-btn">{{ loc.sort_submit }}</button></noscript>
+        <span class="sort-meta">{{ total_count }} {{ loc.question_count }}{% if total_count != 1 %}{{ loc.question_count_plural_suffix }}{% endif %}</span>
+      </form>
+
+      {% if questions %}
+      <ul class="q-list" role="list">
+        {% for q in questions %}
+        <li class="q-item">
+          <a href="/frage/{{ q.id }}" class="q-link">{{ q.question }}</a>
+
+          <div class="mini-res-row">
+            <span class="mini-label" aria-hidden="true">{{ loc.vote_yes_label }}</span>
+            <div class="tui-progress-bar mini-bar"
+                 role="progressbar" aria-valuenow="{{ q.ja_percent }}" aria-valuemin="0" aria-valuemax="100"
+                 aria-label="{{ loc.vote_yes_label }}: {{ q.ja_percent }} %">
+              <span class="tui-progress bar-ja" style="width:{{ q.ja_percent }}%"></span>
+            </div>
+            <span class="mini-pct" aria-hidden="true">{{ q.ja_percent }}&thinsp;%</span>
+          </div>
+          <div class="mini-res-row">
+            <span class="mini-label" aria-hidden="true">{{ loc.vote_no_label }}</span>
+            <div class="tui-progress-bar mini-bar"
+                 role="progressbar" aria-valuenow="{{ q.nein_percent }}" aria-valuemin="0" aria-valuemax="100"
+                 aria-label="{{ loc.vote_no_label }}: {{ q.nein_percent }} %">
+              <span class="tui-progress bar-nein" style="width:{{ q.nein_percent }}%"></span>
+            </div>
+            <span class="mini-pct" aria-hidden="true">{{ q.nein_percent }}&thinsp;%</span>
+          </div>
+
+          <p class="q-meta">{{ q.total }} {{ loc.vote_count }}{% if q.total != 1 %}{{ loc.vote_count_plural_suffix }}{% endif %}</p>
+        </li>
+        {% endfor %}
+      </ul>
+
+      {% if total_pages > 1 %}
+      <nav class="pagination" aria-label="{{ loc.aria_page_nav }}">
+        {% if page > 1 %}
+        <a href="/alle?sort={{ sort }}&seite={{ page - 1 }}" class="page-btn" aria-label="{{ loc.aria_prev_page }}">&lt;&lt;</a>
+        {% else %}
+        <span class="page-btn page-btn-disabled" aria-hidden="true">&lt;&lt;</span>
+        {% endif %}
+
+        <span class="page-info">{{ page }} {{ loc.page_of }} {{ total_pages }}</span>
+
+        {% if page < total_pages %}
+        <a href="/alle?sort={{ sort }}&seite={{ page + 1 }}" class="page-btn" aria-label="{{ loc.aria_next_page }}">&gt;&gt;</a>
+        {% else %}
+        <span class="page-btn page-btn-disabled" aria-hidden="true">&gt;&gt;</span>
+        {% endif %}
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <p class="muted-text">{{ loc.no_questions_yet }}</p>
+      {% endif %}
+
+    </fieldset>
+  </div>
+</div>
+{% endblock %}

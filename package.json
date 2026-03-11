@@ -1,0 +1,11 @@
+{
+  "name": "kann-ai-bot-frontend",
+  "private": true,
+  "description": "Frontend assets for kann-ai-bot",
+  "dependencies": {
+    "tuicss": "^2.0.0"
+  },
+  "scripts": {
+    "install-assets": "cp -r node_modules/tuicss/dist/fonts web/static/vendor/ && cp -r node_modules/tuicss/dist/images web/static/vendor/ && cp node_modules/tuicss/dist/tuicss.min.css node_modules/tuicss/dist/tuicss.min.js web/static/vendor/"
+  }
+}

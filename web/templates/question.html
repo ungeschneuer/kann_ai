@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ article.question }} – {{ site_name }}{% endblock %}
+
+{% block description %}{{ article.question }} {{ loc.og_description }}{% endblock %}
+
+{% block og_meta %}
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="{{ article.question }}">
+<meta property="og:description" content="{{ loc.og_description }}">
+<meta property="og:image"       content="{{ og_image_url }}">
+<meta property="og:image:width"  content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url"         content="{{ article_url }}">
+<meta name="twitter:card"       content="summary_large_image">
+<meta name="twitter:title"      content="{{ article.question }}">
+<meta name="twitter:image"      content="{{ og_image_url }}">
+{% endblock %}
+
+{% block content %}
+<div class="win-center">
+  <div class="tui-window question-win">
+    <button class="tui-fieldset-button" onclick="window.location.href='/'"
+            title="{{ loc.random_title }}" aria-label="{{ loc.random_title }}">&#x25a0;</button>
+    <fieldset class="tui-fieldset">
+      <legend> {{ site_name }} </legend>
+
+      <p class="question-text">{{ article.question }}</p>
+      <a href="{{ article.url }}" class="source-link" target="_blank" rel="noopener">{{ loc.source_link_label }}</a>
+
+      {% if user_voted %}
+
+      <div class="results" aria-live="polite" aria-label="{{ loc.aria_vote_result }}">
+        <div class="res-row">
+          <span class="res-label{% if user_voted == 'ja' %} res-active{% endif %}" aria-hidden="true">{{ loc.vote_yes_label }}</span>
+          <div class="tui-progress-bar res-bar"
+               role="progressbar" aria-valuenow="{{ ja_pct }}" aria-valuemin="0" aria-valuemax="100"
+               aria-label="{{ loc.vote_yes_label }}: {{ ja_pct }} % ({{ counts.ja }} {{ loc.vote_count }}{% if counts.ja != 1 %}{{ loc.vote_count_plural_suffix }}{% endif %})">
+            <span class="tui-progress bar-ja" style="width:{{ ja_pct }}%"></span>
+            <span class="tui-progress-label" aria-hidden="true">{{ ja_pct }}&thinsp;%</span>
+          </div>
+          <span class="res-count" aria-hidden="true">{{ counts.ja }}</span>
+        </div>
+        <div class="res-row">
+          <span class="res-label{% if user_voted == 'nein' %} res-active{% endif %}" aria-hidden="true">{{ loc.vote_no_label }}</span>
+          <div class="tui-progress-bar res-bar"
+               role="progressbar" aria-valuenow="{{ nein_pct }}" aria-valuemin="0" aria-valuemax="100"
+               aria-label="{{ loc.vote_no_label }}: {{ nein_pct }} % ({{ counts.nein }} {{ loc.vote_count }}{% if counts.nein != 1 %}{{ loc.vote_count_plural_suffix }}{% endif %})">
+            <span class="tui-progress bar-nein" style="width:{{ nein_pct }}%"></span>
+            <span class="tui-progress-label" aria-hidden="true">{{ nein_pct }}&thinsp;%</span>
+          </div>
+          <span class="res-count" aria-hidden="true">{{ counts.nein }}</span>
+        </div>
+        <p class="vote-meta">
+          {{ total }} {{ loc.vote_count }}{% if total != 1 %}{{ loc.vote_count_plural_suffix }}{% endif %}<br>
+          {{ loc.vote_your }}: <b>{{ loc.vote_yes_label if user_voted == 'ja' else loc.vote_no_label }}</b>
+        </p>
+      </div>
+
+      {% else %}
+
+      <form class="vote-form" method="post" action="/frage/{{ article.id }}/abstimmen"
+            aria-label="{{ loc.aria_vote_form }}">
+        <button type="submit" name="vote" value="ja"
+                class="tui-button btn-ja"
+                aria-label="{{ loc.vote_yes_label }}">{{ loc.vote_yes }}</button>
+        <button type="submit" name="vote" value="nein"
+                class="tui-button btn-nein"
+                aria-label="{{ loc.vote_no_label }}">{{ loc.vote_no }}</button>
+      </form>
+      {% if total > 0 %}
+      <p class="vote-meta">{{ total }} {{ loc.vote_count }}{% if total != 1 %}{{ loc.vote_count_plural_suffix }}{% endif %} {{ loc.vote_so_far }}</p>
+      {% endif %}
+
+      {% endif %}
+
+      <div class="win-footer">
+        <nav class="win-nav" aria-label="{{ loc.aria_question_nav }}">
+          <a href="/zufall" aria-label="{{ loc.aria_random }}">{{ loc.nav_random_btn }}</a>
+        </nav>
+
+        <div class="share-row">
+          <label for="share-url" class="share-label">{{ loc.share_label }}</label>
+          <input id="share-url" class="tui-input share-input" type="text"
+                 value="{{ article_url }}" readonly onclick="this.select()"
+                 aria-label="{{ loc.aria_share }}">
+        </div>
+
+        {% if social and (social.mastodon_url or social.bluesky_url) %}
+        <div class="social-links">
+          {% if social.mastodon_url %}
+          <a href="{{ social.mastodon_url }}" class="social-link" target="_blank" rel="noopener">{{ loc.view_on_mastodon }}</a>
+          {% endif %}
+          {% if social.bluesky_url %}
+          <a href="{{ social.bluesky_url }}" class="social-link" target="_blank" rel="noopener">{{ loc.view_on_bluesky }}</a>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div>
+
+    </fieldset>
+  </div>
+</div>
+{% endblock %}

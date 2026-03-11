@@ -1,0 +1,626 @@
+/* ============================================================
+   Kann KI? -- TuiCss overrides & layout
+   ============================================================ */
+
+/* ---- Layout ---- */
+
+body {
+  padding-top: 22px;
+  padding-bottom: 22px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  margin-top: 2rem;
+}
+
+/* Auf Mobile: Fenster streckt sich vertikal, Inhalt verteilt sich */
+
+/* ---- Navigation: gleiche Struktur wie Statusbar ---- */
+
+.site-nav {
+  padding: 0 !important;
+}
+
+.nav-items {
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-items li {
+  display: inline-block;
+  padding: 2px 3px;
+  margin-left: 0;
+}
+
+.nav-items li:hover {
+  background-color: #00a800;
+}
+
+.nav-items li a {
+  display: block;
+  white-space: nowrap;
+}
+
+.nav-brand {
+  color: #000;
+  font-weight: bold;
+}
+
+/* Spacer schiebt Links nach rechts */
+.nav-spacer {
+  flex: 1;
+  padding: 0 !important;
+  pointer-events: none;
+}
+
+.nav-spacer:hover {
+  background-color: transparent !important;
+}
+
+/* ---- Centered window wrapper ---- */
+
+.win-center {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
+/* tui-window hat display:inline-block – override auf block fuer volle Breite */
+.question-win,
+.page-win {
+  display: block !important;
+  width: 100%;
+  max-width: 660px;
+  /* originaler TuiCss shadow: gibt dem Fenster Raum nach rechts/unten */
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+/* ---- Frage-Text ---- */
+
+.question-text {
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  color: #fff;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* ---- Abstimmungs-Buttons ---- */
+
+.vote-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.vote-form .tui-button {
+  flex: 1;
+  min-width: 120px;
+  padding: 3px 0;
+  font-size: 1rem;
+  text-align: center;
+  /* originaler TuiCss shadow (10px 10px) – margin gibt ihm Raum */
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.btn-ja {
+  background-color: #00a800 !important;
+  color: #000 !important;
+}
+
+.btn-nein {
+  background-color: #a80000 !important;
+  color: #fff !important;
+}
+
+.btn-nein:active {
+  background-color: #00a8a8 !important;
+}
+
+/* ---- Ergebnisse ---- */
+
+.results {
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.res-row {
+  display: grid;
+  grid-template-columns: 46px 1fr 40px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.res-label {
+  text-align: right;
+  color: #a8a8a8;
+  font-size: 0.9rem;
+}
+
+.res-label.res-active {
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Progress bars: override feste 200px-Breite */
+.res-bar {
+  width: 100% !important;
+  background-color: #000 !important;
+}
+
+.mini-bar {
+  width: 100% !important;
+  height: 12px !important;
+  background-color: #000 !important;
+}
+
+.bar-ja   { background-color: #00a800 !important; }
+.bar-nein { background-color: #a80000 !important; }
+
+.res-count {
+  font-size: 0.8rem;
+  color: #a8a8a8;
+  text-align: right;
+}
+
+.vote-meta {
+  color: #a8a8a8;
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* ---- Fenster-Footer (Nav + Share) ---- */
+
+.win-footer {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #a8a8a8;
+}
+
+.win-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  gap: 0.5rem;
+}
+
+.win-nav a {
+  color: #00c0c0;
+  white-space: nowrap;
+}
+
+.win-nav a:hover {
+  color: #fff;
+}
+
+.nav-disabled {
+  color: #888;
+}
+
+/* ---- Share-Zeile ---- */
+
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.share-label {
+  color: #a8a8a8;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+/* Override globales input{width:200px} aus tuicss */
+.share-input {
+  flex: 1 !important;
+  width: 1px !important;
+  min-width: 0 !important;
+  font-size: 0.78rem !important;
+  padding: 1px 4px !important;
+  height: auto !important;
+  color: #777 !important;
+}
+
+.share-input:focus {
+  color: #fff !important;
+}
+
+/* ---- Alle Fragen ---- */
+
+.sort-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.75rem;
+}
+
+.sort-label {
+  color: #a8a8a8;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Select im TuiCss-Stil (wie .tui-input) */
+.sort-select {
+  flex: 1;
+  min-width: 0;
+  width: 1px !important; /* override tuicss input,select{width:200px} */
+  background-color: #000;
+  color: #fff;
+  border: none;
+  outline: none;
+  border-radius: 0;
+  font-size: 0.85rem;
+  padding: 1px 4px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.sort-select:focus {
+  background-color: #ff0 !important;
+  color: #000 !important;
+}
+
+/* Pfeil-Ersatz: kleiner Hinweis mit CSS */
+.sort-select-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  background-color: #000;
+  border: 1px solid #555;
+}
+
+.sort-select-wrap::after {
+  content: "\25BC";
+  font-size: 0.6rem;
+  color: #a8a8a8;
+  pointer-events: none;
+  padding-right: 4px;
+  flex-shrink: 0;
+}
+
+.sort-btn {
+  padding: 1px 8px;
+  font-size: 0.85rem;
+}
+
+.sort-meta {
+  color: #555;
+  font-size: 0.82rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #333;
+  gap: 0.5rem;
+}
+
+.page-btn {
+  color: #00a8a8;
+  padding: 1px 6px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.page-btn:hover {
+  color: #fff;
+}
+
+.page-btn-disabled {
+  color: #333;
+}
+
+.page-info {
+  color: #a8a8a8;
+  font-size: 0.85rem;
+}
+
+.q-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.q-item {
+  border: 1px solid #333;
+  padding: 0.6rem 0.75rem;
+}
+
+.q-link {
+  display: block;
+  color: #00a8a8 !important;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.q-link:hover {
+  color: #fff !important;
+}
+
+.mini-res-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 38px;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.mini-label {
+  text-align: right;
+  font-size: 0.82rem;
+  color: #a8a8a8;
+}
+
+.mini-pct {
+  font-size: 0.78rem;
+  color: #a8a8a8;
+  text-align: right;
+}
+
+.q-meta {
+  font-size: 0.75rem;
+  color: #a8a8a8;
+  margin-top: 0.3rem;
+}
+
+/* ---- Statische Seiten ---- */
+
+.static-heading {
+  color: #00c0c0;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.static-p {
+  color: #c8c8c8;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  margin-bottom: 0.4rem;
+}
+
+.static-p a {
+  color: #00c0c0;
+}
+
+.static-p a:hover {
+  color: #fff;
+}
+
+/* ---- Social-Links (Frage-Seite) ---- */
+
+.source-link {
+  display: block;
+  margin-top: -1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.78rem;
+  color: #555 !important;
+}
+
+.source-link:hover {
+  color: #a8a8a8 !important;
+}
+
+.social-links {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.social-link {
+  font-size: 0.78rem;
+  color: #555 !important;
+}
+
+.social-link:hover {
+  color: #a8a8a8 !important;
+}
+
+/* ---- Startseite ---- */
+
+.home-tagline {
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  color: #fff;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.home-cta {
+  margin-top: 1.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-start {
+  background-color: #00a8a8 !important;
+  color: #000 !important;
+  padding: 4px 2.5rem !important;
+  font-size: 1rem !important;
+  text-decoration: none !important;
+  display: inline-block;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.btn-start:hover {
+  background-color: #fff !important;
+}
+
+/* ---- Sonstiges ---- */
+
+.muted-text {
+  color: #a8a8a8;
+}
+
+/* ---- Accessibility ---- */
+
+/* Skip-Link: nur sichtbar bei Fokus */
+.skip-link {
+  position: fixed;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 4px 12px;
+  background: #00a8a8;
+  color: #000;
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Fokus-Ringe fuer Tastaturnavigation */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #00a8a8;
+  outline-offset: 2px;
+}
+
+
+/* Animationen deaktivieren wenn Nutzer das bevorzugt */
+@media (prefers-reduced-motion: reduce) {
+  .tui-progress {
+    transition: none !important;
+  }
+}
+
+/* ---- Responsive: <= 600px ---- */
+
+@media (max-width: 600px) {
+  main {
+    padding: 0.75rem;
+  }
+
+  /* Fenster auf ca. halbe Bildschirmhoehe begrenzt */
+  .question-win {
+    display: flex !important;
+    flex-direction: column;
+    min-height: 45vh;
+  }
+
+  .question-win .tui-fieldset {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px !important;
+  }
+
+  .question-text {
+    margin-bottom: 1.25rem;
+  }
+
+  .results {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Footer ans Ende druecken */
+  .win-footer {
+    margin-top: auto;
+  }
+
+  .nav-items li a {
+    font-size: 0.85rem;
+  }
+
+  /* Buttons untereinander */
+  .vote-form {
+    flex-direction: column;
+  }
+
+  .vote-form .tui-button {
+    width: 100%;
+    flex: none;
+  }
+
+  .win-nav {
+    font-size: 0.8rem;
+  }
+
+  .res-row {
+    grid-template-columns: 40px 1fr 34px;
+    gap: 0.3rem;
+  }
+}
+
+/* ---- Responsive: <= 400px (sehr kleine Screens) ---- */
+
+@media (max-width: 400px) {
+  body {
+    padding-top: 22px;
+  }
+
+  /* 2-Zeilen Nav: Brand oben zentriert, Links darunter zentriert */
+  .nav-items {
+    flex-wrap: wrap;
+  }
+
+  .nav-spacer {
+    display: none !important;
+  }
+
+  .nav-items li a {
+    font-size: 0.82rem;
+  }
+
+  /* Statusbar: gleichmaessig verteilen, Trenner und F-Tasten ausblenden */
+  .tui-statusbar ul {
+    display: flex !important;
+    justify-content: space-evenly !important;
+    width: 100%;
+  }
+
+  .tui-statusbar-divider {
+    display: none !important;
+  }
+
+  .fkey {
+    display: none;
+  }
+}

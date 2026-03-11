@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="{{ loc.lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ loc.meta_description }}{% endblock %}">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  {% block og_meta %}{% endblock %}
+  <link rel="stylesheet" href="/static/vendor/tuicss.min.css?v={{ sv }}">
+  <link rel="stylesheet" href="/static/css/style.css?v={{ sv }}">
+</head>
+<body class="black tui-bg-cyan-black">
+
+  <a href="#main-content" class="skip-link">{{ loc.skip_link }}</a>
+
+  <nav class="tui-nav site-nav" aria-label="{{ loc.aria_nav }}">
+    <ul class="nav-items" role="list">
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      <li><a href="/" class="nav-brand"><b>{{ site_name }}</b></a></li>
+      <li class="nav-spacer" aria-hidden="true"></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      <li><a href="/alle">{{ loc.nav_all }}</a></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      <li><a href="/about">{{ loc.nav_about }}</a></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      <li><a href="/zufall">{{ loc.nav_random }}</a></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      {% if other_locale_url %}
+      <li><a href="{{ other_locale_url }}">{{ loc.other_locale_label }}</a></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="tui-statusbar" aria-label="{{ loc.aria_footer }}">
+    <ul role="list">
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      <li><a href="https://schneuer.online">{{ loc.footer_author }}</a></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      {% if mastodon_url %}
+      <li><a href="{{ mastodon_url }}">Mastodon</a></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      {% endif %}
+      {% if bluesky_url %}
+      <li><a href="{{ bluesky_url }}">Bluesky</a></li>
+      <li class="tui-statusbar-divider" aria-hidden="true"></li>
+      {% endif %}
+    </ul>
+  </footer>
+
+  <script src="/static/vendor/tuicss.min.js?v={{ sv }}"></script>
+  <script src="/static/js/main.js?v={{ sv }}"></script>
+</body>
+</html>
