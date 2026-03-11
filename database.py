@@ -47,11 +47,15 @@ CREATE TABLE IF NOT EXISTS mastodon_posts (
 );
 
 CREATE TABLE IF NOT EXISTS social_posts (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    article_id   INTEGER NOT NULL UNIQUE REFERENCES articles(id),
-    mastodon_url TEXT,
-    bluesky_url  TEXT,
-    posted_at    TEXT    NOT NULL
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    article_id          INTEGER NOT NULL UNIQUE REFERENCES articles(id),
+    mastodon_url        TEXT,
+    mastodon_toot_id    TEXT,
+    mastodon_poll_ja    INTEGER NOT NULL DEFAULT 0,
+    mastodon_poll_nein  INTEGER NOT NULL DEFAULT 0,
+    mastodon_poll_done  INTEGER NOT NULL DEFAULT 0,
+    bluesky_url         TEXT,
+    posted_at           TEXT    NOT NULL
 );
 """
 
@@ -77,6 +81,17 @@ def init_db():
             FROM votes
             GROUP BY article_id
         """)
+        # Migration: add new columns to social_posts if they don't exist yet
+        for col, definition in [
+            ("mastodon_toot_id",   "TEXT"),
+            ("mastodon_poll_ja",   "INTEGER NOT NULL DEFAULT 0"),
+            ("mastodon_poll_nein", "INTEGER NOT NULL DEFAULT 0"),
+            ("mastodon_poll_done", "INTEGER NOT NULL DEFAULT 0"),
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE social_posts ADD COLUMN {col} {definition}")
+            except sqlite3.OperationalError:
+                pass  # column already exists
         conn.commit()
 
 
@@ -118,6 +133,7 @@ def get_unposted_article() -> dict | None:
 
 
 def mark_as_posted(article_id: int, mastodon_url: str | None = None,
+                   mastodon_toot_id: str | None = None,
                    bluesky_url: str | None = None):
     """Mark an article as posted and store the social media URLs."""
     now = datetime.now(timezone.utc).isoformat()
@@ -127,12 +143,68 @@ def mark_as_posted(article_id: int, mastodon_url: str | None = None,
             (now, article_id),
         )
         conn.execute(
-            """INSERT INTO social_posts (article_id, mastodon_url, bluesky_url, posted_at)
+            """INSERT INTO social_posts (article_id, mastodon_url, mastodon_toot_id, bluesky_url, posted_at)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(article_id) DO UPDATE SET
+                 mastodon_url     = COALESCE(excluded.mastodon_url,     mastodon_url),
+                 mastodon_toot_id = COALESCE(excluded.mastodon_toot_id, mastodon_toot_id),
+                 bluesky_url      = COALESCE(excluded.bluesky_url,      bluesky_url)""",
+            (article_id, mastodon_url, mastodon_toot_id, bluesky_url, now),
+        )
+        conn.commit()
+
+
+def get_polls_to_sync() -> list[dict]:
+    """Return all articles with a mastodon_toot_id, for poll result syncing."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            """SELECT article_id, mastodon_toot_id, mastodon_poll_ja, mastodon_poll_nein
+               FROM social_posts
+               WHERE mastodon_toot_id IS NOT NULL AND mastodon_poll_done = 0"""
+        ).fetchall()
+    return [
+        {
+            "article_id": row["article_id"],
+            "toot_id":    row["mastodon_toot_id"],
+            "poll_ja":    row["mastodon_poll_ja"],
+            "poll_nein":  row["mastodon_poll_nein"],
+        }
+        for row in rows
+    ]
+
+
+def apply_poll_delta(article_id: int, new_ja: int, new_nein: int,
+                     prev_ja: int, prev_nein: int):
+    """Add the delta between new and previous poll counts to vote_counts."""
+    delta_ja   = max(0, new_ja   - prev_ja)
+    delta_nein = max(0, new_nein - prev_nein)
+    if delta_ja == 0 and delta_nein == 0:
+        return
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """INSERT INTO vote_counts (article_id, ja, nein, total)
                VALUES (?, ?, ?, ?)
                ON CONFLICT(article_id) DO UPDATE SET
-                 mastodon_url = COALESCE(excluded.mastodon_url, mastodon_url),
-                 bluesky_url  = COALESCE(excluded.bluesky_url,  bluesky_url)""",
-            (article_id, mastodon_url, bluesky_url, now),
+                 ja    = ja    + excluded.ja,
+                 nein  = nein  + excluded.nein,
+                 total = total + excluded.total""",
+            (article_id, delta_ja, delta_nein, delta_ja + delta_nein),
+        )
+        conn.execute(
+            """UPDATE social_posts SET mastodon_poll_ja = ?, mastodon_poll_nein = ?
+               WHERE article_id = ?""",
+            (new_ja, new_nein, article_id),
+        )
+        conn.commit()
+
+
+def mark_poll_done(article_id: int):
+    """Mark a poll as expired/finished so it is no longer included in sync queries."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "UPDATE social_posts SET mastodon_poll_done = 1 WHERE article_id = ?",
+            (article_id,),
         )
         conn.commit()
 

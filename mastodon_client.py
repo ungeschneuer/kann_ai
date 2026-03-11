@@ -3,19 +3,26 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from mastodon import Mastodon
-from utils import vote_cta
 
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
 logger = logging.getLogger(__name__)
 LOCALE = os.getenv("LOCALE", "de")
 
+_hours = os.getenv("MASTODON_POLL_DURATION_HOURS", "168")
+POLL_DURATION = int(_hours) * 3600
 
-def _client() -> Mastodon:
-    return Mastodon(
-        access_token=os.getenv("MASTODON_ACCESS_TOKEN"),
-        api_base_url=os.getenv("MASTODON_INSTANCE_URL", "https://mastodon.social"),
-    )
+_singleton: Mastodon | None = None
+
+
+def _get_client() -> Mastodon:
+    global _singleton
+    if _singleton is None:
+        _singleton = Mastodon(
+            access_token=os.getenv("MASTODON_ACCESS_TOKEN"),
+            api_base_url=os.getenv("MASTODON_INSTANCE_URL", "https://mastodon.social"),
+        )
+    return _singleton
 
 
 def _post_url(toot_id: str) -> str:
@@ -25,23 +32,46 @@ def _post_url(toot_id: str) -> str:
     return f"{instance}/@{user}/{toot_id}"
 
 
-def post_question(question: str, article_id: int) -> str:
-    """Post a question to Mastodon, then reply with the vote link. Returns the public URL of the question post."""
-    website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
-    link = f"{website_url}/frage/{article_id}"
-    client = _client()
+def post_question(question: str, article_id: int) -> dict:
+    """Post a question to Mastodon with a native Yes/No poll. Returns {"url": str, "toot_id": str}."""
+    from web.locales import de as _de, en as _en
+    loc = (_en if LOCALE == "en" else _de).STRINGS
 
-    # First post: the question
-    toot = client.status_post(question, language=LOCALE, visibility="public")
-    url = _post_url(str(toot["id"]))
-    logger.info("Posted to Mastodon: %s", url)
+    client = _get_client()
 
-    # Reply: vote CTA with link
-    client.status_post(
-        f"{vote_cta()} {link}",
-        in_reply_to_id=toot["id"],
+    poll = client.make_poll(
+        options=[loc["vote_yes_label"], loc["vote_no_label"]],
+        expires_in=POLL_DURATION,
+        multiple=False,
+        hide_totals=False,
+    )
+    toot = client.status_post(
+        question,
+        poll=poll,
         language=LOCALE,
         visibility="public",
     )
+    toot_id = str(toot["id"])
+    url = _post_url(toot_id)
+    logger.info("Posted to Mastodon: %s", url)
+    return {"url": url, "toot_id": toot_id}
 
-    return url
+
+def sync_poll(toot_id: str) -> dict | None:
+    """Fetch current poll vote counts for a toot.
+    Returns {"ja": int, "nein": int, "expired": bool} or None if no poll."""
+    global _singleton
+    try:
+        status = _get_client().status(toot_id)
+    except Exception:
+        _singleton = None  # force reconnect next call
+        raise
+    poll = status.get("poll")
+    if not poll:
+        return None
+    options = poll["options"]  # [{"title": "Ja", "votes_count": N}, ...]
+    return {
+        "ja":      options[0]["votes_count"] or 0,
+        "nein":    options[1]["votes_count"] or 0,
+        "expired": bool(poll.get("expired")),
+    }

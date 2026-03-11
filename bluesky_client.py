@@ -21,8 +21,9 @@ def _get_client() -> Client:
         password = os.getenv("BLUESKY_APP_PASSWORD", "")
         if not handle or not password:
             raise RuntimeError("BLUESKY_HANDLE or BLUESKY_APP_PASSWORD not set")
-        _client = Client()
-        _client.login(handle, password)
+        c = Client()
+        c.login(handle, password)
+        _client = c
     return _client
 
 

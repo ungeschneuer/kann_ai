@@ -22,7 +22,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from database import init_db, get_unposted_article, get_known_urls, mark_as_posted, store_articles
+from database import (init_db, get_unposted_article, get_known_urls, mark_as_posted,
+                      store_articles, get_polls_to_sync, apply_poll_delta, mark_poll_done)
 from scraper import scrape_all, scrape_new
 import mastodon_client
 import bluesky_client
@@ -57,11 +58,14 @@ def run_cycle():
     logger.info("Posting: %s", article["question"])
 
     mastodon_url = None
+    mastodon_toot_id = None
     bluesky_url = None
 
     if os.getenv("MASTODON_ACCESS_TOKEN"):
         try:
-            mastodon_url = mastodon_client.post_question(article["question"], article["id"])
+            result = mastodon_client.post_question(article["question"], article["id"])
+            mastodon_url = result["url"]
+            mastodon_toot_id = result["toot_id"]
         except Exception:
             logger.exception("Mastodon post failed")
 
@@ -71,8 +75,26 @@ def run_cycle():
         except Exception:
             logger.exception("Bluesky post failed")
 
-    mark_as_posted(article["id"], mastodon_url=mastodon_url, bluesky_url=bluesky_url)
+    mark_as_posted(article["id"], mastodon_url=mastodon_url,
+                   mastodon_toot_id=mastodon_toot_id, bluesky_url=bluesky_url)
     logger.info("Article %d marked as posted", article["id"])
+
+
+def sync_mastodon_polls():
+    if not os.getenv("MASTODON_ACCESS_TOKEN"):
+        return
+    polls = get_polls_to_sync()
+    for p in polls:
+        try:
+            counts = mastodon_client.sync_poll(p["toot_id"])
+            if counts:
+                apply_poll_delta(p["article_id"], counts["ja"], counts["nein"],
+                                 p["poll_ja"], p["poll_nein"])
+                if counts["expired"]:
+                    mark_poll_done(p["article_id"])
+                    logger.info("Poll for article %d expired — marked done", p["article_id"])
+        except Exception:
+            logger.exception("Poll sync failed for toot %s", p["toot_id"])
 
 
 def main():
@@ -85,6 +107,10 @@ def main():
             run_cycle()
         except Exception:
             logger.exception("Error in bot cycle")
+        try:
+            sync_mastodon_polls()
+        except Exception:
+            logger.exception("Error syncing Mastodon polls")
 
         interval = random.randint(MIN_INTERVAL, MAX_INTERVAL)
         logger.info("Next post in %d minutes", interval // 60)
