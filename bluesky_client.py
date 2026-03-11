@@ -8,6 +8,7 @@ from utils import vote_cta
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
 logger = logging.getLogger(__name__)
+LOCALE = os.getenv("LOCALE", "de")
 
 # Singleton client — logs in once per process lifetime
 _client: Client | None = None
@@ -54,7 +55,7 @@ def post_question(question: str, article_id: int) -> str:
     client = _get_client()
 
     # First post: the question
-    first = client.send_post(text=question)
+    first = client.send_post(text=question, langs=[LOCALE])
     url = _post_url(first.uri)
     logger.info("Posted to Bluesky: %s", url)
 
@@ -68,6 +69,7 @@ def post_question(question: str, article_id: int) -> str:
         text=reply_text,
         reply_to=reply_ref,
         facets=_make_link_facet(reply_text, link),
+        langs=[LOCALE],
     )
 
     return url

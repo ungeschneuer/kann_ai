@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
+from blocklist import is_blocked
+
 logger = logging.getLogger(__name__)
 
 HEADERS = {
@@ -87,10 +89,13 @@ def _urls_to_articles(urls: list[str]) -> list[dict]:
         title = _slug_to_title(slug)
         if len(title) < 5:
             continue
+        question = make_question(title)
+        if is_blocked(title, LOCALE) or is_blocked(question, LOCALE):
+            continue
         articles.append({
             "url": url,
             "title": title,
-            "question": make_question(title),
+            "question": question,
         })
     return articles
 

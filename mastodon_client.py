@@ -8,6 +8,7 @@ from utils import vote_cta
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
 logger = logging.getLogger(__name__)
+LOCALE = os.getenv("LOCALE", "de")
 
 
 def _client() -> Mastodon:
@@ -31,7 +32,7 @@ def post_question(question: str, article_id: int) -> str:
     client = _client()
 
     # First post: the question
-    toot = client.toot(question)
+    toot = client.status_post(question, language=LOCALE, visibility="public")
     url = _post_url(str(toot["id"]))
     logger.info("Posted to Mastodon: %s", url)
 
@@ -39,6 +40,8 @@ def post_question(question: str, article_id: int) -> str:
     client.status_post(
         f"{vote_cta()} {link}",
         in_reply_to_id=toot["id"],
+        language=LOCALE,
+        visibility="public",
     )
 
     return url
