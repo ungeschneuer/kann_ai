@@ -40,14 +40,14 @@
   <footer class="tui-statusbar" aria-label="{{ loc.aria_footer }}">
     <ul role="list">
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
-      <li><a href="https://schneuer.online">{{ loc.footer_author }}</a></li>
+      <li><a href="https://schneuer.online" target="_blank" rel="noopener">{{ loc.footer_author }}</a></li>
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
       {% if mastodon_url %}
-      <li><a href="{{ mastodon_url }}">Mastodon</a></li>
+      <li><a href="{{ mastodon_url }}" target="_blank" rel="noopener">Mastodon</a></li>
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
       {% endif %}
       {% if bluesky_url %}
-      <li><a href="{{ bluesky_url }}">Bluesky</a></li>
+      <li><a href="{{ bluesky_url }}" target="_blank" rel="noopener">Bluesky</a></li>
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
       {% endif %}
     </ul>
