@@ -17,7 +17,7 @@
   <nav class="tui-nav site-nav" aria-label="{{ loc.aria_nav }}">
     <ul class="nav-items" role="list">
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
-      <li><a href="/" class="nav-brand"><b>{{ site_name }}</b></a></li>
+      <li class="nav-brand-item"><a href="/" class="nav-brand"><b>{{ site_name }}</b></a></li>
       <li class="nav-spacer" aria-hidden="true"></li>
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
       <li><a href="/alle">{{ loc.nav_all }}</a></li>
@@ -33,21 +33,21 @@
     </ul>
   </nav>
 
-  <main id="main-content">
+  <main id="main-content" tabindex="-1">
     {% block content %}{% endblock %}
   </main>
 
   <footer class="tui-statusbar" aria-label="{{ loc.aria_footer }}">
     <ul role="list">
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
-      <li><a href="https://schneuer.online" target="_blank" rel="noopener">{{ loc.footer_author }}</a></li>
+      <li class="footer-author"><a href="https://schneuer.online" target="_blank" rel="noopener">{{ loc.footer_author }}</a></li>
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
       {% if mastodon_url %}
-      <li><a href="{{ mastodon_url }}" target="_blank" rel="noopener">Mastodon</a></li>
+      <li><a href="{{ mastodon_url }}" target="_blank" rel="noopener" aria-label="Mastodon"><img src="/static/img/mastodon.svg" alt="" width="18" height="18" class="social-icon"></a></li>
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
       {% endif %}
       {% if bluesky_url %}
-      <li><a href="{{ bluesky_url }}" target="_blank" rel="noopener">Bluesky</a></li>
+      <li><a href="{{ bluesky_url }}" target="_blank" rel="noopener" aria-label="Bluesky"><img src="/static/img/bluesky.svg" alt="" width="18" height="18" class="social-icon"></a></li>
       <li class="tui-statusbar-divider" aria-hidden="true"></li>
       {% endif %}
     </ul>

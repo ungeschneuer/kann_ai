@@ -48,14 +48,27 @@ def post_question(question: str, article_id: int) -> dict:
     website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
     link = f"{website_url}/frage/{article_id}"
     toot = client.status_post(
-        f"{question}\n\n{link}",
+        question,
         poll=poll,
         language=LOCALE,
         visibility="public",
     )
     toot_id = str(toot["id"])
-    url = _post_url(toot_id)
+    url = toot.get("url") or _post_url(toot_id)
     logger.info("Posted to Mastodon: %s", url)
+
+    # Reply with the website link as unlisted — visible in the thread and on the
+    # profile, but not shown in public timelines (avoids duplicate timeline entries).
+    try:
+        client.status_post(
+            link,
+            in_reply_to_id=toot_id,
+            language=LOCALE,
+            visibility="unlisted",
+        )
+    except Exception:
+        logger.warning("Failed to post link reply for toot %s", toot_id)
+
     return {"url": url, "toot_id": toot_id}
 
 

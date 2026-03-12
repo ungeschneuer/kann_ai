@@ -63,8 +63,9 @@ CREATE TABLE IF NOT EXISTS social_posts (
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.executescript(SCHEMA)
-        # One-time migration: fix old "Kann AI" typo
-        conn.execute("UPDATE articles SET question = REPLACE(question, 'Kann AI ', 'Kann KI ')")
+        # One-time migration: fix old "Kann AI" typo (only runs if stale rows exist)
+        if conn.execute("SELECT 1 FROM articles WHERE question LIKE 'Kann AI %' LIMIT 1").fetchone():
+            conn.execute("UPDATE articles SET question = REPLACE(question, 'Kann AI ', 'Kann KI ')")
         # One-time migration: copy mastodon_posts into social_posts
         conn.execute("""
             INSERT OR IGNORE INTO social_posts (article_id, posted_at)
@@ -115,20 +116,44 @@ def store_articles(articles: list[dict]) -> int:
     return added
 
 
-def get_known_urls() -> set[str]:
-    """Return the set of all URLs already stored in the database."""
+def filter_new_urls(urls: list[str]) -> list[str]:
+    """
+    Return only URLs from the list that are not already in the database.
+    Uses a temporary table and a LEFT JOIN — avoids loading all DB URLs into memory.
+    """
+    if not urls:
+        return []
     with sqlite3.connect(DB_PATH) as conn:
-        rows = conn.execute("SELECT url FROM articles").fetchall()
-    return {row[0] for row in rows}
+        conn.execute("CREATE TEMP TABLE _sitemap_check (url TEXT PRIMARY KEY)")
+        conn.executemany("INSERT OR IGNORE INTO _sitemap_check (url) VALUES (?)", [(u,) for u in urls])
+        rows = conn.execute(
+            """SELECT c.url FROM _sitemap_check c
+               LEFT JOIN articles a ON c.url = a.url
+               WHERE a.url IS NULL"""
+        ).fetchall()
+    return [row[0] for row in rows]
 
 
 def get_unposted_article() -> dict | None:
-    """Return a random article that has not been posted yet."""
+    """Return a random unposted article using an ID-range approach (avoids full table sort)."""
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         row = conn.execute(
-            "SELECT * FROM articles WHERE posted_at IS NULL ORDER BY RANDOM() LIMIT 1"
+            """SELECT * FROM articles
+               WHERE posted_at IS NULL
+                 AND id >= (
+                     SELECT MIN(id) + CAST(
+                         (MAX(id) - MIN(id) + 1) * (ABS(RANDOM()) / 9223372036854775808.0)
+                     AS INTEGER)
+                     FROM articles WHERE posted_at IS NULL
+                 )
+               ORDER BY id LIMIT 1"""
         ).fetchone()
+        # Fallback: ID-range can miss if the chosen ID is already posted — wrap around
+        if row is None:
+            row = conn.execute(
+                "SELECT * FROM articles WHERE posted_at IS NULL ORDER BY id LIMIT 1"
+            ).fetchone()
         return dict(row) if row else None
 
 
@@ -154,14 +179,23 @@ def mark_as_posted(article_id: int, mastodon_url: str | None = None,
         conn.commit()
 
 
-def get_polls_to_sync() -> list[dict]:
-    """Return all articles with a mastodon_toot_id, for poll result syncing."""
+def get_polls_to_sync(max_age_hours: int = 192) -> list[dict]:
+    """
+    Return polls that are active and within the sync window.
+
+    max_age_hours caps how far back to look (default: poll duration + 24h buffer).
+    This prevents stuck polls (missed expiry due to API errors) from accumulating
+    in the queue indefinitely as post count grows.
+    """
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
             """SELECT article_id, mastodon_toot_id, mastodon_poll_ja, mastodon_poll_nein
                FROM social_posts
-               WHERE mastodon_toot_id IS NOT NULL AND mastodon_poll_done = 0"""
+               WHERE mastodon_toot_id IS NOT NULL
+                 AND mastodon_poll_done = 0
+                 AND posted_at >= datetime('now', ? || ' hours')""",
+            (f"-{max_age_hours}",),
         ).fetchall()
     return [
         {
@@ -224,13 +258,24 @@ async def async_get_article(article_id: int) -> dict | None:
 
 
 async def async_get_random_article() -> dict | None:
+    """Return a random article using an ID-range approach (O(log n) via index, avoids full sort)."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
-            "SELECT * FROM articles ORDER BY RANDOM() LIMIT 1"
+            """SELECT * FROM articles
+               WHERE id >= (
+                   SELECT MIN(id) + CAST(
+                       (MAX(id) - MIN(id) + 1) * (ABS(RANDOM()) / 9223372036854775808.0)
+                   AS INTEGER)
+                   FROM articles
+               )
+               ORDER BY id LIMIT 1"""
         ) as cur:
             row = await cur.fetchone()
-            return dict(row) if row else None
+        if row is None:
+            async with db.execute("SELECT * FROM articles ORDER BY id LIMIT 1") as cur:
+                row = await cur.fetchone()
+        return dict(row) if row else None
 
 
 async def async_get_vote_counts(article_id: int) -> dict:

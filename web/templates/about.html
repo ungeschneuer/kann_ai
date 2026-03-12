@@ -4,16 +4,17 @@
 {% block content %}
 <div class="win-center">
   <div class="tui-window page-win">
+    <h1 class="visually-hidden">{{ loc.about_title }}</h1>
     <fieldset class="tui-fieldset">
       <legend> {{ loc.about_title }} </legend>
 
       <p class="static-p">{{ loc.about_intro | safe }}</p>
 
-      <p class="static-heading">{{ loc.about_how_title | safe }}</p>
+      <h2 class="static-heading">{{ loc.about_how_title | safe }}</h2>
       <p class="static-p">{{ loc.about_how_body | safe }}</p>
 
       {% if mastodon_url %}
-      <p class="static-heading">{{ loc.about_mastodon_title | safe }}</p>
+      <h2 class="static-heading">{{ loc.about_mastodon_title | safe }}</h2>
       <p class="static-p">
         {{ loc.about_mastodon_body }}
         <a href="{{ mastodon_url }}" target="_blank" rel="noopener">{{ mastodon_handle }}</a>.
@@ -21,16 +22,16 @@
       {% endif %}
 
       {% if bluesky_url %}
-      <p class="static-heading">{{ loc.about_bluesky_title | safe }}</p>
+      <h2 class="static-heading">{{ loc.about_bluesky_title | safe }}</h2>
       <p class="static-p">
         {{ loc.about_bluesky_body }}
         <a href="{{ bluesky_url }}" target="_blank" rel="noopener">{{ bluesky_handle }}</a>.
       </p>
       {% endif %}
 
-      <p class="static-heading">{{ loc.about_tech_title | safe }}</p>
+      <h2 class="static-heading">{{ loc.about_tech_title | safe }}</h2>
       <p class="static-p">
-        Python &bull; FastAPI &bull; SQLite &bull; <a href="https://github.com/vinibiavatti1/TuiCss" target="_blank" rel="noopener">TuiCss</a><br>
+        Python &bull; FastAPI &bull; SQLite &bull; <a href="https://spacy.io" target="_blank" rel="noopener">spaCy</a> &bull; <a href="https://github.com/vinibiavatti1/TuiCss" target="_blank" rel="noopener">TuiCss</a><br>
         {{ loc.about_tech_scraping }} <a href="{{ loc.about_wikihow_url }}" target="_blank" rel="noopener">{{ loc.about_wikihow_label }}</a>.<br>
         {{ loc.about_tech_hosting | safe }}
       </p>

@@ -130,7 +130,7 @@ async def home_og_preview(request: Request):
         loop = asyncio.get_running_loop()
         png = await loop.run_in_executor(
             None,
-            lambda: generate_og_image(LOC["home_tagline"], SITE_NAME, {}, WEBSITE_URL),
+            lambda: generate_og_image(LOC["home_tagline"], SITE_NAME, WEBSITE_URL),
         )
         _home_og_cache = (etag, png)
     return Response(content=_home_og_cache[1], media_type="image/png", headers={
@@ -178,7 +178,7 @@ async def question_page(
     ja_pct = round(counts["ja"] / total * 100) if total else 0
     nein_pct = 100 - ja_pct if total else 0
 
-    user_voted = request.cookies.get(f"voted_{article_id}")
+    user_voted = await async_get_user_vote(article_id, session)
     article_url = f"{WEBSITE_URL}/frage/{article_id}"
     og_image_url = f"{WEBSITE_URL}/frage/{article_id}/preview.png"
 
@@ -245,8 +245,6 @@ async def vote(
     resp = RedirectResponse(url=f"/frage/{article_id}", status_code=303)
     resp.set_cookie("session_id", session, max_age=365 * 24 * 3600,
                     httponly=True, samesite="lax")
-    resp.set_cookie(f"voted_{article_id}", vote, max_age=365 * 24 * 3600,
-                    httponly=True, samesite="lax")
     return resp
 
 
@@ -268,7 +266,7 @@ async def og_preview(article_id: int, request: Request):
         loop = asyncio.get_running_loop()
         png = await loop.run_in_executor(
             None,
-            lambda: generate_og_image(article["question"], SITE_NAME, {}, WEBSITE_URL),
+            lambda: generate_og_image(article["question"], SITE_NAME, WEBSITE_URL),
         )
         if len(_og_cache) >= _OG_CACHE_MAX:
             _og_cache.popitem(last=False)

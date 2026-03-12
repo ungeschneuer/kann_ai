@@ -39,6 +39,8 @@ def _make_link_facet(text: str, link: str) -> list:
     text_bytes = text.encode("utf-8")
     link_bytes = link.encode("utf-8")
     start = text_bytes.rfind(link_bytes)
+    if start == -1:
+        return []
     return [
         models.AppBskyRichtextFacet.Main(
             features=[models.AppBskyRichtextFacet.Link(uri=link)],
@@ -55,9 +57,9 @@ def post_question(question: str, article_id: int) -> str:
     website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
     site_name = os.getenv("SITE_NAME", "Kann KI?")
     link = f"{website_url}/frage/{article_id}"
-    post_text = f"{vote_cta()}\n\n{link}"
+    post_text = f"{vote_cta()} {link}"
 
-    png = generate_og_image(question, site_name, {}, website_url)
+    png = generate_og_image(question, site_name, website_url)
 
     client = _get_client()
     post = client.send_image(

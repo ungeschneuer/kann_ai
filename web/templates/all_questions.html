@@ -4,6 +4,7 @@
 {% block content %}
 <div class="win-center">
   <div class="tui-window page-win">
+    <h1 class="visually-hidden">{{ loc.page_alle_title }}</h1>
     <fieldset class="tui-fieldset">
       <legend> {{ loc.page_alle_title }} </legend>
 
@@ -12,14 +13,13 @@
       <form class="sort-form" method="get" action="/alle" aria-label="{{ loc.sort_label }}">
         <label for="sort-select" class="sort-label">{{ loc.sort_label }}</label>
         <span class="sort-select-wrap">
-          <select id="sort-select" name="sort" class="sort-select"
-                  onchange="this.form.submit()">
+          <select id="sort-select" name="sort" class="sort-select" aria-label="{{ loc.sort_label }}">
             {% for key, label in sort_labels.items() %}
             <option value="{{ key }}"{% if key == sort %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </span>
-        <noscript><button type="submit" class="tui-button sort-btn">{{ loc.sort_submit }}</button></noscript>
+        <button type="submit" class="tui-button sort-btn">{{ loc.sort_submit }}</button>
         <span class="sort-meta">{{ total_count }} {{ loc.question_count }}{% if total_count != 1 %}{{ loc.question_count_plural_suffix }}{% endif %}</span>
       </form>
 

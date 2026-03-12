@@ -15,7 +15,14 @@ dependencies = [
     "pillow>=12.1.1",
     "slowapi>=0.1.9",
     "atproto>=0.0.65",
+    "spacy>=3.8.11",
+    "de-core-news-sm",
+    "en-core-web-sm",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["web"]
+
+[tool.uv.sources]
+de-core-news-sm = { url = "https://github.com/explosion/spacy-models/releases/download/de_core_news_sm-3.8.0/de_core_news_sm-3.8.0-py3-none-any.whl" }
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }

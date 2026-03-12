@@ -24,12 +24,12 @@
     <fieldset class="tui-fieldset">
       <legend> {{ site_name }} </legend>
 
-      <p class="question-text">{{ article.question }}</p>
+      <h1 class="question-text">{{ article.question }}</h1>
       <a href="{{ article.url }}" class="source-link" target="_blank" rel="noopener">{{ loc.source_link_label }}</a>
 
       {% if user_voted %}
 
-      <div class="results" aria-live="polite" aria-label="{{ loc.aria_vote_result }}">
+      <div class="results" aria-label="{{ loc.aria_vote_result }}">
         <div class="res-row">
           <span class="res-label{% if user_voted == 'ja' %} res-active{% endif %}" aria-hidden="true">{{ loc.vote_yes_label }}</span>
           <div class="tui-progress-bar res-bar"

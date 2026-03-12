@@ -2,10 +2,33 @@
    Kann KI? -- TuiCss overrides & layout
    ============================================================ */
 
+/* ---- Heading reset: preserve visual appearance, enable semantic structure ---- */
+
+h1, h2 {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+/* Screen-reader-only: visually hidden but accessible */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---- Layout ---- */
 
 body {
-  padding-top: 22px;
+  padding-top: 46px;   /* single-row nav height ~44 px + 2 px breathing room */
   padding-bottom: 22px;
   padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px));
   min-height: 100vh;
@@ -26,41 +49,63 @@ main {
 
 /* Auf Mobile: Fenster streckt sich vertikal, Inhalt verteilt sich */
 
-/* ---- Navigation: gleiche Struktur wie Statusbar ---- */
+/* ---- Navigation ---- */
+/*
+ * TuiCSS sets: display:block; position:fixed; top:0; background:#a8a8a8
+ * ul li: display:inline-block; margin-left:10px
+ * We reset to flexbox for full layout control.
+ */
 
 .site-nav {
-  padding: 0 !important;
+  padding: 0;
+  top: 0;           /* TuiCSS omits top:0 — without it the fixed nav drifts down */
 }
 
+/* Full-width flex row; override TuiCSS inline-block per item */
 .nav-items {
   display: flex !important;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .nav-items li {
-  display: inline-block;
-  padding: 2px 3px;
-  margin-left: 0;
+  display: flex !important;
+  align-items: center;
+  margin-left: 0 !important;
+  padding: 0;
 }
 
 .nav-items li:hover {
   background-color: #00a800;
 }
 
-.nav-items li a {
-  display: block;
-  white-space: nowrap;
+/* Divider: thin vertical line between nav items */
+.nav-items .tui-statusbar-divider {
+  border-right: 2px solid #000;
+  margin: 0 1px;
+  padding: 0;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.nav-items .tui-statusbar-divider:hover {
+  background-color: transparent !important;
+}
+
+.nav-brand-item {
+  padding: 0 6px;
 }
 
 .nav-brand {
   color: #000;
   font-weight: bold;
+  white-space: nowrap;
 }
 
-/* Spacer schiebt Links nach rechts */
+/* Spacer pushes nav links to the right */
 .nav-spacer {
   flex: 1;
   padding: 0 !important;
@@ -69,6 +114,16 @@ main {
 
 .nav-spacer:hover {
   background-color: transparent !important;
+}
+
+/* Nav link touch targets: min 44 px tall, horizontally padded */
+.nav-items li a {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  min-height: 44px;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 /* ---- Centered window wrapper ---- */
@@ -116,7 +171,8 @@ main {
 .vote-form .tui-button {
   flex: 1;
   min-width: 120px;
-  padding: 3px 0;
+  min-height: 44px;
+  padding: 10px 0;
   font-size: 1rem;
   text-align: center;
   /* originaler TuiCss shadow (10px 10px) – margin gibt ihm Raum */
@@ -213,6 +269,7 @@ main {
 .win-nav a {
   color: #00c0c0;
   white-space: nowrap;
+  padding: 10px 8px;
 }
 
 .win-nav a:hover {
@@ -246,7 +303,7 @@ main {
   font-size: 0.78rem !important;
   padding: 1px 4px !important;
   height: auto !important;
-  color: #777 !important;
+  color: #a8a8a8 !important;
 }
 
 .share-input:focus {
@@ -276,13 +333,14 @@ main {
   flex: 1;
   min-width: 0;
   width: 1px !important; /* override tuicss input,select{width:200px} */
+  min-height: 44px;
   background-color: #000;
   color: #fff;
   border: none;
   outline: none;
   border-radius: 0;
   font-size: 0.85rem;
-  padding: 1px 4px;
+  padding: 10px 4px;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -314,12 +372,13 @@ main {
 }
 
 .sort-btn {
-  padding: 1px 8px;
+  padding: 10px 12px;
+  min-height: 44px;
   font-size: 0.85rem;
 }
 
 .sort-meta {
-  color: #555;
+  color: #a8a8a8;
   font-size: 0.82rem;
   margin-left: auto;
   flex-shrink: 0;
@@ -338,7 +397,7 @@ main {
 
 .page-btn {
   color: #00a8a8;
-  padding: 1px 6px;
+  padding: 10px 12px;
   font-size: 0.9rem;
   white-space: nowrap;
 }
@@ -437,11 +496,11 @@ main {
   margin-top: -1rem;
   margin-bottom: 1.25rem;
   font-size: 0.78rem;
-  color: #555 !important;
+  color: #a8a8a8 !important;
 }
 
 .source-link:hover {
-  color: #a8a8a8 !important;
+  color: #fff !important;
 }
 
 .social-links {
@@ -454,11 +513,11 @@ main {
 
 .social-link {
   font-size: 0.78rem;
-  color: #555 !important;
+  color: #a8a8a8 !important;
 }
 
 .social-link:hover {
-  color: #a8a8a8 !important;
+  color: #fff !important;
 }
 
 /* ---- Startseite ---- */
@@ -479,7 +538,7 @@ main {
 .btn-start {
   background-color: #00a8a8 !important;
   color: #000 !important;
-  padding: 4px 2.5rem !important;
+  padding: 12px 2.5rem !important;
   font-size: 1rem !important;
   text-decoration: none !important;
   display: inline-block;
@@ -498,9 +557,67 @@ main {
   color: #a8a8a8;
 }
 
-/* ---- iOS Safari safe-area fix ---- */
+/* ---- Footer ---- */
+/*
+ * TuiCSS sets: position:fixed; bottom:0; width:100%; background:#a8a8a8
+ * ul li: display:inline-block; margin-left:10px
+ * We reset to flexbox for full layout control.
+ */
 
-/* Push the fixed statusbar above the home indicator / Safari toolbar */
+/* Full-width flex row; override TuiCSS inline-block per item */
+.tui-statusbar ul {
+  display: flex !important;
+  align-items: stretch;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tui-statusbar ul li {
+  display: flex !important;
+  align-items: center;
+  margin-left: 0 !important;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+/* Divider: thin vertical line between footer items */
+.tui-statusbar .tui-statusbar-divider {
+  border-right: 2px solid #000;
+  margin: 0 1px;
+  padding: 0;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/*
+ * Footer author fills all available space; social links (Mastodon, Bluesky)
+ * stay at their natural size and are always fully visible.
+ * If the screen is very narrow the author text truncates with ellipsis.
+ */
+.footer-author {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.footer-author a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Social icons (Mastodon, Bluesky) in the footer */
+.social-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  color: #000;   /* force black on the gray statusbar background */
+}
+
+/* iOS Safari: raise footer above home indicator */
 .tui-statusbar {
   padding-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
@@ -544,8 +661,73 @@ input:focus-visible {
 /* ---- Responsive: <= 600px ---- */
 
 @media (max-width: 600px) {
+  /*
+   * Two-row mobile nav: brand on row 1 (full width, centred),
+   * all nav links share row 2 equally.
+   * Nav height = 2 × 44 px = 88 px → increase body padding-top.
+   */
+  body {
+    padding-top: 90px;
+  }
+
   main {
+    margin-top: 0;
     padding: 0.75rem;
+  }
+
+  /* Enable row wrapping */
+  .nav-items {
+    flex-wrap: wrap;
+  }
+
+  /* Row 1: brand centred, full width, same visual weight as nav links */
+  .nav-brand-item {
+    width: 100%;
+    justify-content: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    padding: 0 8px;
+  }
+
+  .nav-brand {
+    font-size: 0.85rem;   /* match nav link font-size */
+    font-weight: normal;  /* remove bold — brand row is already visually distinct */
+  }
+
+  /* Spacer not needed in two-row layout */
+  .nav-spacer {
+    display: none !important;
+  }
+
+  /* Hide only the very first divider — it sits before the brand item and
+     would otherwise appear alone on its own row above "Kann KI?".
+     All other dividers (between the link items) remain visible. */
+  .nav-items > .tui-statusbar-divider:first-child {
+    display: none !important;
+  }
+
+  /* Links row: each link item gets equal width; dividers stay at natural size */
+  .nav-items li:not(.nav-brand-item):not(.nav-spacer):not(.tui-statusbar-divider) {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  /* Allow multi-word labels (e.g. "Nächste Frage") to wrap within the cell */
+  .nav-items li a {
+    font-size: 0.85rem;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+    padding: 8px 4px;
+  }
+
+  /* Footer: hide dividers on mobile.
+     footer-author has flex:1 so it fills available space automatically,
+     pushing Mastodon and Bluesky to the right without justify-content tricks. */
+  .tui-statusbar .tui-statusbar-divider {
+    display: none !important;
   }
 
   /* Fenster auf ca. halbe Bildschirmhoehe begrenzt */
@@ -575,10 +757,6 @@ input:focus-visible {
     margin-top: auto;
   }
 
-  .nav-items li a {
-    font-size: 0.85rem;
-  }
-
   /* Buttons untereinander */
   .vote-form {
     flex-direction: column;
@@ -597,37 +775,22 @@ input:focus-visible {
     grid-template-columns: 40px 1fr 34px;
     gap: 0.3rem;
   }
+
+  /* Alle Fragen: hide "Sortieren:" label and question count — select + button
+     are self-explanatory at this size. aria-label on the select preserves
+     accessibility for screen readers. */
+  .sort-label,
+  .sort-meta {
+    display: none;
+  }
 }
 
 /* ---- Responsive: <= 400px (sehr kleine Screens) ---- */
 
 @media (max-width: 400px) {
-  body {
-    padding-top: 22px;
-  }
-
-  /* 2-Zeilen Nav: Brand oben zentriert, Links darunter zentriert */
-  .nav-items {
-    flex-wrap: wrap;
-  }
-
-  .nav-spacer {
-    display: none !important;
-  }
-
+  /* Slightly smaller font to fit four nav items on one row */
   .nav-items li a {
-    font-size: 0.82rem;
-  }
-
-  /* Statusbar: gleichmaessig verteilen, Trenner und F-Tasten ausblenden */
-  .tui-statusbar ul {
-    display: flex !important;
-    justify-content: space-evenly !important;
-    width: 100%;
-  }
-
-  .tui-statusbar-divider {
-    display: none !important;
+    font-size: 0.80rem;
   }
 
   .fkey {

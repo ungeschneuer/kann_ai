@@ -71,7 +71,6 @@ def _wrap_text(text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[
 
 
 def generate_og_image(question: str, site_name: str = "Kann KI?",
-                      vote_counts: dict | None = None,
                       site_url: str = "") -> bytes:
     """
     Erzeugt ein 1200x630 OG-Preview-Bild als PNG-Bytes.

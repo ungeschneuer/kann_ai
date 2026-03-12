@@ -12,8 +12,7 @@ from dotenv import load_dotenv
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
 if os.getenv("LOCALE") not in ("de", "en"):
-    import logging as _l
-    _l.warning("Unknown LOCALE '%s' — falling back to 'de'", os.getenv("LOCALE"))
+    logging.warning("Unknown LOCALE '%s' — falling back to 'de'", os.getenv("LOCALE"))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from database import (init_db, get_unposted_article, get_known_urls, mark_as_posted,
+from database import (init_db, get_unposted_article, mark_as_posted,
                       store_articles, get_polls_to_sync, apply_poll_delta, mark_poll_done)
 from scraper import scrape_all, scrape_new
 import mastodon_client
@@ -43,8 +42,7 @@ def seed_if_empty():
 
 def run_cycle():
     """One bot cycle: check for new articles, then post one question."""
-    known = get_known_urls()
-    articles = scrape_new(known)
+    articles = scrape_new()
     if articles:
         added = store_articles(articles)
         if added:
@@ -75,15 +73,23 @@ def run_cycle():
         except Exception:
             logger.exception("Bluesky post failed")
 
-    mark_as_posted(article["id"], mastodon_url=mastodon_url,
-                   mastodon_toot_id=mastodon_toot_id, bluesky_url=bluesky_url)
-    logger.info("Article %d marked as posted", article["id"])
+    any_configured = bool(os.getenv("MASTODON_ACCESS_TOKEN") or os.getenv("BLUESKY_APP_PASSWORD"))
+    any_succeeded  = bool(mastodon_url or bluesky_url)
+    if not any_configured or any_succeeded:
+        mark_as_posted(article["id"], mastodon_url=mastodon_url,
+                       mastodon_toot_id=mastodon_toot_id, bluesky_url=bluesky_url)
+        logger.info("Article %d marked as posted", article["id"])
+    else:
+        logger.error("All social posts failed — article %d NOT marked as posted", article["id"])
 
 
 def sync_mastodon_polls():
     if not os.getenv("MASTODON_ACCESS_TOKEN"):
         return
-    polls = get_polls_to_sync()
+    # Limit sync window to poll duration + 24h buffer so stuck polls
+    # (missed expiry due to API errors) don't accumulate indefinitely.
+    max_age = mastodon_client.POLL_DURATION // 3600 + 24
+    polls = get_polls_to_sync(max_age_hours=max_age)
     for p in polls:
         try:
             counts = mastodon_client.sync_poll(p["toot_id"])
