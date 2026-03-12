@@ -52,7 +52,12 @@ LOWERCASE_STARTERS = LOWERCASE_STARTERS_EN if LOCALE == "en" else LOWERCASE_STAR
 
 def _slug_to_title(slug: str) -> str:
     title = unquote(slug)
-    title = title.strip('"').strip("'").strip()
+    # Only strip wrapping quotes when both ends match (e.g. '"Foo"'), not one side
+    for q in ('"', "'"):
+        if title.startswith(q) and title.endswith(q) and len(title) > 2:
+            title = title[1:-1]
+            break
+    title = title.strip()
     title = title.replace("-", " ")
     title = re.sub(r"\s+", " ", title).strip()
     return title
