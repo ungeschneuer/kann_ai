@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
-DB_PATH = os.getenv("DB_PATH", "kann_ai.db")
+DB_PATH = os.getenv("DB_PATH", "kann_ai_de.db")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS articles (

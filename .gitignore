@@ -14,3 +14,4 @@ __pycache__/
 dist/
 .uv/
 .DS_Store
+Makefile

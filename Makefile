@@ -18,8 +18,8 @@ $(error Create a .uberspace file with: UBERSPACE=youruser@xyz.uberspace.de)
 endif
 
 SSH = ssh $(UBERSPACE)
-REMOTE_DIR = /var/www/virtual/$(shell echo $(UBERSPACE) | cut -d@ -f1)/kann_ai_bot
-LOG_DIR    = /var/www/virtual/$(shell echo $(UBERSPACE) | cut -d@ -f1)/logs
+REMOTE_DIR = /home/$(shell echo $(UBERSPACE) | cut -d@ -f1)/repos/kann_ai_bot
+LOG_DIR    = /home/$(shell echo $(UBERSPACE) | cut -d@ -f1)/repos/logs
 
 .PHONY: setup deploy status restart restart-web restart-bots \
         logs-web-de logs-web-en logs-bot-de logs-bot-en seed-de seed-en
