@@ -5,7 +5,7 @@ STRINGS = {
     "nav_random": "Nächste Frage",
     "nav_random_btn": "[ Nächste Frage ]",
     "home_tagline": "Kann Künstliche Intelligenz das?",
-    "home_body": "Wenn es nach den großen KI-Firmen geht, können ihre Produkte fast alles oder werden es bald können. Aber stimmt das wirklich? Und sollten Sie manche Aufgaben überhaupt übernehmen? Dieses Projekt scrapt WikiHow-Artikel und verwandelt sie in eine Frage: Kann Künstliche Intelligenz das erledigen? Du stimmst ab.",
+    "home_body": "Wenn es nach den großen KI-Firmen geht, können ihre Produkte fast alles oder werden es bald können. Aber stimmt das wirklich? Du stimmst ab.",
     "home_cta": "[ Jetzt abstimmen ]",
     "home_cta_label": "Zufällige Frage aufrufen und abstimmen",
     "vote_yes": "[ Ja ]",

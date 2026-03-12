@@ -5,7 +5,7 @@ STRINGS = {
     "nav_random": "Next Question",
     "nav_random_btn": "[ Next Question ]",
     "home_tagline": "Can Artificial Intelligence do it?",
-    "home_body": "According to the big AI companies, their products can do almost anything \u2014 or soon will. But is that really true? And should they take over these tasks at all? This project scrapes WikiHow articles and turns them into a question: can Artificial Intelligence handle it? You vote.",
+    "home_body": "According to the big AI companies, their products can do almost anything \u2014 or soon will. But is that really true? You vote.",
     "home_cta": "[ Start voting ]",
     "home_cta_label": "Go to a random question and vote",
     "vote_yes": "[ Yes ]",
