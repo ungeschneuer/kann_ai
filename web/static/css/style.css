@@ -78,8 +78,10 @@ main {
   padding: 0;
 }
 
-.nav-items li:hover {
-  background-color: #00a800;
+@media (hover: hover) {
+  .nav-items li:hover {
+    background-color: #00a800;
+  }
 }
 
 /* Divider: thin vertical line between nav items */
