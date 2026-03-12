@@ -7,7 +7,9 @@
 body {
   padding-top: 22px;
   padding-bottom: 22px;
+  padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px));
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -481,6 +483,7 @@ main {
   font-size: 1rem !important;
   text-decoration: none !important;
   display: inline-block;
+  white-space: nowrap;
   margin-right: 10px;
   margin-bottom: 10px;
 }
@@ -493,6 +496,13 @@ main {
 
 .muted-text {
   color: #a8a8a8;
+}
+
+/* ---- iOS Safari safe-area fix ---- */
+
+/* Push the fixed statusbar above the home indicator / Safari toolbar */
+.tui-statusbar {
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
 
 /* ---- Accessibility ---- */
