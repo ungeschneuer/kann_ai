@@ -258,23 +258,13 @@ async def async_get_article(article_id: int) -> dict | None:
 
 
 async def async_get_random_article() -> dict | None:
-    """Return a random article using an ID-range approach (O(log n) via index, avoids full sort)."""
+    """Return a random article with uniform distribution using a random offset into COUNT(*)."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
-            """SELECT * FROM articles
-               WHERE id >= (
-                   SELECT MIN(id) + CAST(
-                       (MAX(id) - MIN(id) + 1) * (ABS(RANDOM()) / 9223372036854775808.0)
-                   AS INTEGER)
-                   FROM articles
-               )
-               ORDER BY id LIMIT 1"""
+            "SELECT * FROM articles LIMIT 1 OFFSET (ABS(RANDOM()) % MAX(1, (SELECT COUNT(*) FROM articles)))"
         ) as cur:
             row = await cur.fetchone()
-        if row is None:
-            async with db.execute("SELECT * FROM articles ORDER BY id LIMIT 1") as cur:
-                row = await cur.fetchone()
         return dict(row) if row else None
 
 
