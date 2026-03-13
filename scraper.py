@@ -88,6 +88,11 @@ def clean_title(title: str) -> str:
 _BAD_PREFIXES_EN = re.compile(
     r"^\d|"  # starts with a number (e.g. "10 Signs...")
     r"^(What|Why|When|Where|Who|Which|Whether|"
+    # Direct questions — produce "Can AI can/does/is/are..." constructions
+    r"Can|Could|Should|Would|Will|Shall|"
+    r"Does|Did|Do|Is|Are|Was|Were|Has|Have|Had|"
+    # Indirect how-questions (not how-to actions)
+    r"How\s+does|How\s+did|How\s+do\s+(?!you\b)|How\s+is|How\s+are|How\s+was|How\s+were|"
     r"Signs|Symptoms|Reasons|Ways|Tips|Tricks|Facts|Types|"
     r"Understanding|Everything|Things|Examples|Differences|"
     r"Benefits|Effects|Causes|History|Overview|Introduction)\b",
