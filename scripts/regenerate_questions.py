@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 from scraper import clean_title, _is_action_title, _get_nlp, _make_question_from_doc, LOCALE, QUESTION_PREFIX
 from blocklist import is_blocked
 
-DB_PATH = os.getenv("DB_PATH", "kann_ai.db")
+DB_PATH = os.getenv("DB_PATH", "kann_ai_de.db")
 
 def regenerate():
     conn = sqlite3.connect(DB_PATH)
