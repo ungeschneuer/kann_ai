@@ -135,25 +135,13 @@ def filter_new_urls(urls: list[str]) -> list[str]:
 
 
 def get_unposted_article() -> dict | None:
-    """Return a random unposted article using an ID-range approach (avoids full table sort)."""
+    """Return a uniformly random unposted article using a random offset into COUNT(*)."""
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         row = conn.execute(
-            """SELECT * FROM articles
-               WHERE posted_at IS NULL
-                 AND id >= (
-                     SELECT MIN(id) + CAST(
-                         (MAX(id) - MIN(id) + 1) * (ABS(RANDOM()) / 9223372036854775808.0)
-                     AS INTEGER)
-                     FROM articles WHERE posted_at IS NULL
-                 )
-               ORDER BY id LIMIT 1"""
+            """SELECT * FROM articles WHERE posted_at IS NULL
+               LIMIT 1 OFFSET (ABS(RANDOM()) % MAX(1, (SELECT COUNT(*) FROM articles WHERE posted_at IS NULL)))"""
         ).fetchone()
-        # Fallback: ID-range can miss if the chosen ID is already posted — wrap around
-        if row is None:
-            row = conn.execute(
-                "SELECT * FROM articles WHERE posted_at IS NULL ORDER BY id LIMIT 1"
-            ).fetchone()
         return dict(row) if row else None
 
 
