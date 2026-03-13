@@ -15,7 +15,7 @@ from blocklist import is_blocked
 from scraper import clean_title, _is_action_title
 
 locale = os.getenv("LOCALE", "de")
-db_path = os.getenv("DB_PATH", "kann_ai.db")
+db_path = os.getenv("DB_PATH", "kann_ai_de.db")
 
 
 def _should_remove(title: str, question: str) -> bool:
