@@ -27,7 +27,7 @@
       <h1 class="question-text">{{ article.question }}</h1>
       <a href="{{ article.url }}" class="source-link" target="_blank" rel="noopener">{{ loc.source_link_label }}</a>
 
-      {% if user_voted %}
+      {% if show_results %}
 
       <div class="results" aria-label="{{ loc.aria_vote_result }}">
         <div class="res-row">
@@ -55,6 +55,13 @@
           {{ loc.vote_your }}: <b>{{ loc.vote_yes_label if user_voted == 'ja' else loc.vote_no_label }}</b>
         </p>
       </div>
+
+      {% elif user_voted %}
+
+      <p class="vote-meta">
+        {{ loc.vote_your }}: <b>{{ loc.vote_yes_label if user_voted == 'ja' else loc.vote_no_label }}</b><br>
+        {{ loc.vote_pending_results }}
+      </p>
 
       {% else %}
 

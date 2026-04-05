@@ -22,6 +22,16 @@ COLOR_BRIGHT  = (255, 255, 255)  # weiss
 COLOR_CYAN    = (0,  168, 168)   # #00a8a8
 COLOR_GRAY    = (80,  80,  80)
 
+# Possible window background colors for random selection
+WINDOW_COLORS = [
+    (0,   0, 168),   # blue
+    (0, 168,   0),   # green
+    (168,  0,   0),  # red
+    (0, 168, 168),   # cyan
+    (168,  0, 168),  # magenta
+    (168, 168,   0), # brown/yellow
+]
+
 # Rahmen-Abstände
 PAD   = 60   # Außenabstand
 INNER = 80   # Innenabstand
@@ -71,7 +81,8 @@ def _wrap_text(text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[
 
 
 def generate_og_image(question: str, site_name: str = "Kann KI?",
-                      site_url: str = "") -> bytes:
+                      site_url: str = "",
+                      window_color: tuple = COLOR_BLUE) -> bytes:
     """
     Erzeugt ein 1200x630 OG-Preview-Bild als PNG-Bytes.
     """
@@ -84,10 +95,10 @@ def generate_og_image(question: str, site_name: str = "Kann KI?",
         for y in range(0, H, 4):
             draw.point((x, y), fill=dot_color)
 
-    # Blaues Fenster
+    # Fenster
     win_x0, win_y0 = PAD, PAD
     win_x1, win_y1 = W - PAD, H - PAD
-    draw.rectangle([win_x0, win_y0, win_x1, win_y1], fill=COLOR_BLUE)
+    draw.rectangle([win_x0, win_y0, win_x1, win_y1], fill=window_color)
 
     # Doppelter Rahmen
     _draw_tui_border(draw, win_x0, win_y0, win_x1, win_y1, COLOR_WHITE)

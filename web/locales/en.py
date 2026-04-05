@@ -16,6 +16,7 @@ STRINGS = {
     "vote_count": "vote",
     "vote_count_plural_suffix": "s",
     "vote_so_far": "so far",
+    "vote_pending_results": "Results appear once 3 people have voted.",
     "share_label": "Link:",
     "nav_prev": "<< Back",
     "nav_next": "Next >>",

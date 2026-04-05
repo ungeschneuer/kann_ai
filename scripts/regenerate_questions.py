@@ -46,7 +46,7 @@ def regenerate():
 
     for (article_id, title), doc in zip(valid_rows, nlp.pipe(cleaned_list, batch_size=256)):
         question = _make_question_from_doc(doc)
-        if is_blocked(question, LOCALE):
+        if question is None or is_blocked(question, LOCALE):
             ids_to_delete.append(article_id)
             continue
         updates.append((question, article_id))

@@ -16,6 +16,7 @@ STRINGS = {
     "vote_count": "Stimme",
     "vote_count_plural_suffix": "n",
     "vote_so_far": "bisher",
+    "vote_pending_results": "Ergebnisse gibt es ab drei Stimmen.",
     "share_label": "Link:",
     "nav_prev": "<< Zurück",
     "nav_next": "Weiter >>",

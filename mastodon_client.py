@@ -1,8 +1,11 @@
+import io
 import os
+import random
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from mastodon import Mastodon
+from web.og_image import generate_og_image, WINDOW_COLORS
 
 load_dotenv(os.getenv("DOTENV_PATH", str(Path(__file__).parent / ".env")))
 
@@ -33,42 +36,32 @@ def _post_url(toot_id: str) -> str:
 
 
 def post_question(question: str, article_id: int) -> dict:
-    """Post a question to Mastodon with a native Yes/No poll. Returns {"url": str, "toot_id": str}."""
-    from web.locales import de as _de, en as _en
-    loc = (_en if LOCALE == "en" else _de).STRINGS
+    """Post a question to Mastodon as either an image or plain text (50/50). Returns {"url": str, "toot_id": str}."""
+    site_name = os.getenv("SITE_NAME", "Kann KI?")
+    website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
 
     client = _get_client()
 
-    poll = client.make_poll(
-        options=[loc["vote_yes_label"], loc["vote_no_label"]],
-        expires_in=POLL_DURATION,
-        multiple=False,
-        hide_totals=False,
-    )
-    website_url = os.getenv("WEBSITE_URL", "http://localhost:8000")
-    link = f"{website_url}/frage/{article_id}"
+    media_ids = None
+    if random.random() < 0.5:
+        color = random.choice(WINDOW_COLORS)
+        png = generate_og_image(question, site_name, website_url, window_color=color)
+        media = client.media_post(
+            io.BytesIO(png),
+            mime_type="image/png",
+            description=question,
+        )
+        media_ids = [media]
+
     toot = client.status_post(
         question,
-        poll=poll,
+        media_ids=media_ids,
         language=LOCALE,
         visibility="public",
     )
     toot_id = str(toot["id"])
     url = toot.get("url") or _post_url(toot_id)
     logger.info("Posted to Mastodon: %s", url)
-
-    # Reply with the website link as unlisted — visible in the thread and on the
-    # profile, but not shown in public timelines (avoids duplicate timeline entries).
-    try:
-        client.status_post(
-            link,
-            in_reply_to_id=toot_id,
-            language=LOCALE,
-            visibility="unlisted",
-        )
-    except Exception:
-        logger.warning("Failed to post link reply for toot %s", toot_id)
-
     return {"url": url, "toot_id": toot_id}
 
 

@@ -179,6 +179,8 @@ async def question_page(
     nein_pct = 100 - ja_pct if total else 0
 
     user_voted = await async_get_user_vote(article_id, session)
+    show_results = bool(user_voted) and total >= 3
+
     article_url = f"{WEBSITE_URL}/frage/{article_id}"
     og_image_url = f"{WEBSITE_URL}/frage/{article_id}/preview.png"
 
@@ -190,6 +192,7 @@ async def question_page(
         "ja_pct": ja_pct,
         "nein_pct": nein_pct,
         "user_voted": user_voted,
+        "show_results": show_results,
         "prev_article": prev_a,
         "next_article": next_a,
         "article_url": article_url,
@@ -233,16 +236,18 @@ async def vote(
         raise HTTPException(status_code=404, detail="Frage nicht gefunden")
 
     session = _session(session_id)
-    accepted = await async_add_vote(article_id, vote, session)
+    await async_add_vote(article_id, vote, session)
 
-    # If vote was rejected (duplicate session), retrieve the stored vote so the
-    # cookie and results view reflect what was actually counted.
-    if not accepted:
-        stored = await async_get_user_vote(article_id, session)
-        if stored:
-            vote = stored
+    counts = await async_get_vote_counts(article_id)
+    total = counts["ja"] + counts["nein"]
 
-    resp = RedirectResponse(url=f"/frage/{article_id}", status_code=303)
+    # Only show results once 3 different users have answered this question.
+    if total >= 3:
+        redirect_url = f"/frage/{article_id}"
+    else:
+        redirect_url = "/zufall"
+
+    resp = RedirectResponse(url=redirect_url, status_code=303)
     resp.set_cookie("session_id", session, max_age=365 * 24 * 3600,
                     httponly=True, samesite="lax")
     return resp

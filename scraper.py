@@ -101,7 +101,7 @@ _BAD_PREFIXES_EN = re.compile(
 
 _BAD_PREFIXES_DE = re.compile(
     r"^\d|"  # starts with a number
-    r"^(Was|Warum|Wann|Wo|Wer|Welche|Welcher|Welches|"
+    r"^(Was|Warum|Wann|Wo|Wer|Wie|Welche|Welcher|Welches|"
     r"Zeichen|Symptome|Gründe|Wege|Tipps|Tricks|Fakten|Arten|Typen|"
     r"Unterschiede|Vorteile|Nachteile|Ursachen|Geschichte|Übersicht|"
     r"Alles|Dinge|Beispiele|Einführung|"
@@ -123,13 +123,21 @@ def _is_action_title(cleaned_title: str) -> bool:
     return not prefix_pattern.match(cleaned_title) and not suffix_pattern.search(cleaned_title)
 
 
-def _make_question_from_doc(doc: spacy.tokens.Doc) -> str:
-    """Build the question string from a pre-parsed spaCy doc."""
+def _make_question_from_doc(doc: spacy.tokens.Doc) -> str | None:
+    """Build the question string from a pre-parsed spaCy doc.
+    Returns None if the result would be grammatically broken."""
     tokens = list(doc)
     if not tokens:
-        return QUESTION_PREFIX + "?"
+        return None
 
     if LOCALE == "en":
+        # Valid action titles must start with a verb infinitive.
+        # e.g. "tell", "cut", "deal" — not "sounds" (3rd-person) or "popular" (adj).
+        if tokens[0].pos_ not in {"VERB", "AUX"}:
+            return None
+        verb_form = tokens[0].morph.get("VerbForm")
+        if verb_form and "Inf" not in verb_form:
+            return None
         # English WikiHow uses title case. We run spaCy on the pre-lowercased input
         # (see make_question / _urls_to_articles) so common nouns are not mis-tagged
         # as PROPN due to capitalisation. Re-capitalise only genuine proper nouns.
@@ -137,6 +145,18 @@ def _make_question_from_doc(doc: spacy.tokens.Doc) -> str:
     else:
         words = [t.text for t in tokens]
         first_lower = words[0].lower()
+
+        if tokens[0].pos_ == "VERB":
+            # Reject conjugated verbs (direct question structure, e.g. "Nimmst du...").
+            # Only infinitives (e.g. "lernen", "erkennen") are valid action titles.
+            verb_form = tokens[0].morph.get("VerbForm")
+            if verb_form and "Inf" not in verb_form:
+                return None
+        elif tokens[0].pos_ == "NOUN":
+            # Allow nominalized infinitives (Schwimmen, Basteln) but reject abstract
+            # nouns like "Bewältigung" (-ung, -heit, etc.) that produce broken questions.
+            if not (first_lower.endswith("en") or first_lower.endswith("eln") or first_lower.endswith("ern")):
+                return None
 
         # Lowercase the first word if spaCy tags it as a non-noun POS.
         should_lower = tokens[0].pos_ in _LOWERCASE_POS
@@ -166,11 +186,12 @@ def _make_question_from_doc(doc: spacy.tokens.Doc) -> str:
     return QUESTION_PREFIX + " " + " ".join(words) + "?"
 
 
-def make_question(title: str) -> str:
-    """Turn a single article title into a question. Use _urls_to_articles for bulk."""
+def make_question(title: str) -> str | None:
+    """Turn a single article title into a question. Returns None if the title is not a valid action.
+    Use _urls_to_articles for bulk."""
     cleaned = clean_title(title)
-    if not cleaned:
-        return QUESTION_PREFIX + "?"
+    if not cleaned or not _is_action_title(cleaned):
+        return None
     nlp_input = cleaned.lower() if LOCALE == "en" else cleaned
     return _make_question_from_doc(_get_nlp()(nlp_input))
 
@@ -213,14 +234,14 @@ def _urls_to_articles(urls: list[str]) -> list[dict]:
     articles = []
     for candidate, doc in zip(candidates, nlp.pipe(cleaned_titles, batch_size=256)):
         question = _make_question_from_doc(doc)
-        # Second blocklist check on the generated question (catches blocked terms
-        # that only appear after question transformation)
-        if not is_blocked(question, LOCALE):
-            articles.append({
-                "url":      candidate["url"],
-                "title":    candidate["title"],
-                "question": question,
-            })
+        # Skip grammatically invalid questions and blocklisted content
+        if question is None or is_blocked(question, LOCALE):
+            continue
+        articles.append({
+            "url":      candidate["url"],
+            "title":    candidate["title"],
+            "question": question,
+        })
     return articles
 
 
