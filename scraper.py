@@ -147,11 +147,20 @@ def _make_question_from_doc(doc: spacy.tokens.Doc) -> str | None:
         first_lower = words[0].lower()
 
         if tokens[0].pos_ == "VERB":
-            # Reject conjugated verbs (direct question structure, e.g. "Nimmst du...").
-            # Only infinitives (e.g. "lernen", "erkennen") are valid action titles.
+            # Reject conjugated/imperative verbs (e.g. "Nimmst du...", "Verhindere...").
+            # Only infinitives (e.g. "lernen", "verhindern") are valid action titles.
             verb_form = tokens[0].morph.get("VerbForm")
-            if verb_form and "Inf" not in verb_form:
-                return None
+            if verb_form:
+                if "Inf" not in verb_form:
+                    return None
+            else:
+                # No VerbForm info — check Mood, then fall back to suffix.
+                mood = tokens[0].morph.get("Mood")
+                if mood and "Imp" in mood:
+                    return None
+                # German infinitives end in -en, -eln, -ern; anything else is conjugated.
+                if not (first_lower.endswith("en") or first_lower.endswith("eln") or first_lower.endswith("ern")):
+                    return None
         elif tokens[0].pos_ == "NOUN":
             # Allow nominalized infinitives (Schwimmen, Basteln) but reject abstract
             # nouns like "Bewältigung" (-ung, -heit, etc.) that produce broken questions.
