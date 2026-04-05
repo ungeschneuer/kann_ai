@@ -45,7 +45,7 @@ def post_question(question: str, article_id: int) -> str:
         color = random.choice(WINDOW_COLORS)
         png = generate_og_image(question, site_name, website_url, window_color=color)
         post = client.send_image(
-            text=question,
+            text="",
             image=png,
             image_alt=question,
             langs=[LOCALE],

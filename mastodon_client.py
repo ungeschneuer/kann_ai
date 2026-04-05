@@ -53,8 +53,9 @@ def post_question(question: str, article_id: int) -> dict:
         )
         media_ids = [media]
 
+    toot_text = "" if media_ids else question
     toot = client.status_post(
-        question,
+        toot_text,
         media_ids=media_ids,
         language=LOCALE,
         visibility="public",
